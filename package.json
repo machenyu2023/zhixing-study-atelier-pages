@@ -6,7 +6,8 @@
   "description": "A private-first study workspace for IELTS, logic, writing and mathematics.",
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
-    "check": "node --check app.js && node --check workbook-bank.js && node --check storage.js && node --check config.js && node --check server.mjs && node scripts/validate-project.mjs",
+    "generate:bank": "node scripts/generate-open-bank.mjs",
+    "check": "node scripts/generate-open-bank.mjs && node --check app.js && node --check workbook-bank.js && node --check storage.js && node --check config.js && node --check server.mjs && node scripts/validate-project.mjs",
     "build": "node scripts/build-static.mjs",
     "test": "npm run check"
   },

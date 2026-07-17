@@ -29,6 +29,18 @@
       "question": "用 200-300 字论证：效率不应成为评价学习的唯一标准。",
       "checkpoints": ["中心论点具体且可争辩", "包含一个具体例子", "回应一个可能的反方", "给出适用边界"],
       "wordTarget": 250
+    },
+    {
+      "id": "demo-fill-1",
+      "type": "fill",
+      "subject": "math",
+      "topic": "矩阵论 · 行列式",
+      "difficulty": "进阶",
+      "taskType": "填空题",
+      "question": "设 A=[[2,1],[3,4]]，求 det(A)。",
+      "answers": ["5"],
+      "numericTolerance": 0,
+      "explanation": "det(A)=2×4-1×3=5。"
     }
   ]
 }

@@ -13,6 +13,8 @@ const SCORE_DIMENSIONS = [
   { key: "expression_quality", label: "表达质量" }
 ];
 
+const BUNDLED_BANK_URLS = ["data/question-banks/open-practice-bank.json"];
+
 const QUESTIONS = [
   { id: "i1", subject: "ielts", topic: "语境词义", difficulty: "基础", question: "In the sentence “The proposal was met with considerable scepticism”, the word “scepticism” is closest in meaning to:", options: ["enthusiasm", "doubt", "confusion", "approval"], answer: 1, explanation: `“Be met with scepticism” 表示“受到质疑”。scepticism 的核心含义是 doubt，即对真实性或可行性持怀疑态度。` },
   { id: "i2", subject: "ielts", topic: "阅读推断", difficulty: "进阶", question: "A study found that employees working four days completed the same amount of work as those working five days, while reporting lower stress. Which conclusion is best supported?", options: ["All companies should close on Fridays.", "Shorter weeks may maintain output while improving wellbeing.", "Stress has no relationship with productivity.", "Employees worked longer hours each day."], answer: 1, explanation: `原文只支持“可能维持产出并改善幸福感”。A 过度推广，C 与材料不符，D 没有证据。` },
@@ -23,10 +25,10 @@ const QUESTIONS = [
   { id: "l2", subject: "logic", topic: "三段论", difficulty: "基础", question: "所有哲学家都善于思考；有些教师是哲学家。以下哪项必然为真？", options: ["所有教师都善于思考", "有些教师善于思考", "有些善于思考的人不是教师", "没有教师不善于思考"], answer: 1, explanation: `有些教师属于哲学家，而所有哲学家都善于思考，所以这部分教师必然善于思考。不能把“有些”扩大为“所有”。` },
   { id: "l3", subject: "logic", topic: "论证削弱", difficulty: "进阶", question: "某咖啡店更换招牌后，月销售额增长了 20%，店主认为新招牌带来了增长。哪项最能削弱该结论？", options: ["新招牌使用了暖色", "同期附近写字楼新增了大量入驻员工", "部分老顾客不喜欢新招牌", "招牌制作成本高于预期"], answer: 1, explanation: `新增办公人群提供了销售额增长的另一原因，直接削弱“增长由招牌导致”的因果解释。` },
   { id: "l4", subject: "logic", topic: "集合关系", difficulty: "进阶", question: "没有诗人是冷漠的；有些科学家是诗人。以下哪项一定成立？", options: ["所有科学家都不冷漠", "有些科学家不冷漠", "冷漠的人都不是科学家", "有些诗人不是科学家"], answer: 1, explanation: `有些科学家同时是诗人，而诗人都不冷漠，因此至少有些科学家不冷漠。` },
-  { id: "m1", subject: "math", topic: "一元方程", difficulty: "基础", question: "若 3(x − 2) + 5 = 2x + 9，则 x 的值为：", options: ["8", "9", "10", "11"], answer: 2, explanation: `展开得 3x−6+5=2x+9，即 3x−1=2x+9，所以 x=10。` },
-  { id: "m2", subject: "math", topic: "概率", difficulty: "基础", question: "袋中有 3 个红球和 2 个蓝球，随机取出 1 个球，取到蓝球的概率是：", options: ["1/5", "2/5", "1/2", "3/5"], answer: 1, explanation: `总球数为 5，蓝球有 2 个，等可能随机抽取时概率为 2/5。` },
-  { id: "m3", subject: "math", topic: "数列", difficulty: "基础", question: "等差数列 4, 7, 10, 13, … 的第 10 项是：", options: ["28", "30", "31", "34"], answer: 2, explanation: `首项为 4，公差为 3。第 10 项 a₁₀=4+(10−1)×3=31。` },
-  { id: "m4", subject: "math", topic: "几何", difficulty: "进阶", question: "一个圆的半径增加 20%，它的面积增加百分之多少？", options: ["20%", "40%", "44%", "48%"], answer: 2, explanation: `面积与半径平方成正比。新面积为 1.2²=1.44 倍，因此增加 44%。` }
+  { id: "m1", subject: "math", topic: "优化 · KKT 条件", difficulty: "进阶", question: "对凸优化问题 min f(x)，约束 gᵢ(x)≤0。若目标与约束均为可微凸函数，且 Slater 条件成立，以下哪项正确？", options: ["强对偶成立，KKT 条件可刻画最优解", "只能得到弱对偶，不能使用 KKT 条件", "任意可行点都是全局最优点", "最优解必然唯一"], answer: 0, explanation: `可微凸性与 Slater 条件给出强对偶，KKT 条件对最优性既必要又充分。严格凸性才进一步保证最优解唯一。` },
+  { id: "m2", subject: "math", topic: "矩阵论 · 谱定理", difficulty: "进阶", question: "设 A 是实对称矩阵。谱定理保证下列哪项必然成立？", options: ["A 可被正交矩阵对角化", "A 的所有元素均非负", "A 必为正定矩阵", "A 只有一个特征值"], answer: 0, explanation: `实对称矩阵存在一组标准正交特征向量，因此可写为 A=QΛQᵀ，其中 Q 为正交矩阵、Λ 为实对角矩阵。` },
+  { id: "m3", subject: "math", topic: "随机过程 · 鞅", difficulty: "进阶", question: "若 {Mₙ, Fₙ} 是可积鞅，则下列哪一等式成立？", options: ["E[Mₙ₊₁|Fₙ]=Mₙ", "E[Mₙ₊₁|Fₙ]=0", "Mₙ₊₁=Mₙ 几乎处处", "Var(Mₙ₊₁|Fₙ)=0"], answer: 0, explanation: `鞅的核心条件是适应性、可积性以及 E[Mₙ₊₁|Fₙ]=Mₙ。它要求条件均值不变，并不要求样本路径不变。` },
+  { id: "m4", subject: "math", topic: "高等概率论 · 收敛方式", difficulty: "进阶", question: "关于随机变量序列的收敛，下列哪项蕴含关系总是成立？", options: ["几乎处处收敛蕴含依概率收敛", "依分布收敛蕴含均方收敛", "依概率收敛蕴含几乎处处收敛", "L¹ 收敛蕴含 L² 收敛"], answer: 0, explanation: `几乎处处收敛必然蕴含依概率收敛。反向一般不成立；依分布收敛更弱，L¹ 收敛也不能一般推出 L² 收敛。` }
 ];
 
 const WRITING_PROMPTS = [
@@ -40,7 +42,7 @@ const DAILY_TASKS = [
   { id: "t1", subject: "ielts", title: "完成 5 道阅读推断题", meta: "25 分钟 · 立即练习" },
   { id: "t2", subject: "logic", title: "复盘条件推理错题", meta: "10 分钟 · 错题本" },
   { id: "t3", subject: "writing", title: "写一个清晰的开头段", meta: "20 分钟 · 写作室" },
-  { id: "t4", subject: "math", title: "完成 3 道概率题", meta: "15 分钟 · 立即练习" }
+  { id: "t4", subject: "math", title: "完成 3 道高级数学题", meta: "20 分钟 · 四模块轮换" }
 ];
 
 const DEFAULT_STATE = {
@@ -49,8 +51,11 @@ const DEFAULT_STATE = {
 };
 
 let state = { ...DEFAULT_STATE };
+let bundledQuestions = [];
+let bundledBanks = [];
 let currentView = "today";
 let libraryFilter = "all";
+let libraryVisibleLimit = 100;
 let practiceQueue = [];
 let practiceIndex = 0;
 let selectedAnswer = null;
@@ -61,6 +66,7 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const getQuestions = () => [
   ...QUESTIONS,
   ...(typeof WORKBOOK_QUESTIONS !== "undefined" ? WORKBOOK_QUESTIONS : []),
+  ...bundledQuestions,
   ...state.customQuestions
 ];
 const localDateKey = (date = new Date()) => {
@@ -81,6 +87,39 @@ async function loadState() {
   };
 }
 
+async function loadBundledQuestionBanks() {
+  const loadedQuestions = [];
+  const loadedBanks = [];
+  const seenIds = new Set([
+    ...QUESTIONS,
+    ...(typeof WORKBOOK_QUESTIONS !== "undefined" ? WORKBOOK_QUESTIONS : [])
+  ].map(question => question.id));
+  try {
+    for (const url of BUNDLED_BANK_URLS) {
+      const response = await fetch(url, { cache: "no-cache" });
+      if (!response.ok) throw new Error(`无法读取 ${url}（${response.status}）`);
+      const payload = await response.json();
+      if (payload.schemaVersion !== 1 || !payload.bank?.id || !Array.isArray(payload.questions)) {
+        throw new Error(`${url} 不符合题库 schemaVersion 1`);
+      }
+      const normalized = payload.questions.map((question, index) => normalizeImportedQuestion(question, payload.bank.id, index));
+      for (const question of normalized) {
+        if (seenIds.has(question.id)) throw new Error(`内置题库包含重复 ID：${question.id}`);
+        seenIds.add(question.id);
+        loadedQuestions.push(question);
+      }
+      loadedBanks.push({ ...payload.bank, count: normalized.length, url });
+    }
+    bundledQuestions = loadedQuestions;
+    bundledBanks = loadedBanks;
+  } catch (error) {
+    bundledQuestions = [];
+    bundledBanks = [];
+    console.error(error);
+    showToast("扩展题库加载失败，已保留基础题库");
+  }
+}
+
 function saveState() {
   StudyStorage.save(state).catch(() => showToast("学习数据保存失败，请及时导出备份"));
   updateNavCounts();
@@ -88,6 +127,7 @@ function saveState() {
 
 async function init() {
   state = await loadState();
+  await loadBundledQuestionBanks();
   setDate();
   bindNavigation();
   bindActions();
@@ -115,13 +155,27 @@ function bindActions() {
   $("#library-add").addEventListener("click", openQuestionModal);
   $("#bank-import").addEventListener("click", () => $("#bank-import-input").click());
   $("#bank-import-input").addEventListener("change", event => handleBankImport(event.target.files?.[0]));
-  $("#question-search").addEventListener("input", renderLibrary);
+  $("#question-search").addEventListener("input", () => {
+    libraryVisibleLimit = 100;
+    renderLibrary();
+  });
   $$("#library-filters .filter-chip").forEach(button => button.addEventListener("click", () => {
     libraryFilter = button.dataset.filter;
+    libraryVisibleLimit = 100;
     $$("#library-filters .filter-chip").forEach(item => item.classList.toggle("active", item === button));
     renderLibrary();
   }));
   $("#question-form").addEventListener("submit", handleQuestionForm);
+  $("#question-type").addEventListener("change", updateQuestionTypeFields);
+  $("#close-question-modal").addEventListener("click", closeQuestionModal);
+  $("#cancel-question-modal").addEventListener("click", closeQuestionModal);
+  $("#question-modal").addEventListener("cancel", event => {
+    event.preventDefault();
+    closeQuestionModal();
+  });
+  $("#question-modal").addEventListener("click", event => {
+    if (event.target === event.currentTarget) closeQuestionModal();
+  });
   $("#save-draft").addEventListener("click", saveDraft);
   $("#writing-editor").addEventListener("input", () => {
     updateWordCount();
@@ -131,6 +185,20 @@ function bindActions() {
   $("#open-data-menu").addEventListener("click", () => $("#data-modal").showModal());
   $("#close-data-modal").addEventListener("click", () => $("#data-modal").close());
   $("#export-data").addEventListener("click", exportData);
+  $("#export-ai-prompts").addEventListener("click", exportAllReviewPrompts);
+  $("#open-copyright").addEventListener("click", () => {
+    $("#data-modal").close();
+    $("#copyright-modal").showModal();
+  });
+  $("#close-copyright-modal").addEventListener("click", closeCopyrightModal);
+  $("#acknowledge-copyright").addEventListener("click", closeCopyrightModal);
+  $("#copyright-modal").addEventListener("cancel", event => {
+    event.preventDefault();
+    closeCopyrightModal();
+  });
+  $("#copyright-modal").addEventListener("click", event => {
+    if (event.target === event.currentTarget) closeCopyrightModal();
+  });
   $("#reset-data").addEventListener("click", resetData);
 }
 
@@ -234,9 +302,10 @@ function renderSubjectProgress() {
 
 function renderLibrary() {
   const query = ($("#question-search")?.value || "").trim().toLowerCase();
-  let questions = getQuestions().filter(question => `${question.question} ${question.topic} ${question.taskType || "选择题"} ${SUBJECTS[question.subject].name}`.toLowerCase().includes(query));
+  let questions = getQuestions().filter(question => `${question.question} ${question.topic} ${question.taskType || questionTypeLabel(question)} ${SUBJECTS[question.subject].name}`.toLowerCase().includes(query));
   if (libraryFilter === "wrong") questions = questions.filter(question => state.wrongIds.includes(question.id));
   else if (libraryFilter === "open") questions = questions.filter(question => question.type === "open");
+  else if (libraryFilter === "fill") questions = questions.filter(question => question.type === "fill");
   else if (libraryFilter !== "all") questions = questions.filter(question => question.subject === libraryFilter);
   $("#question-result-count").textContent = `${questions.length} 道题目`;
   const container = $("#question-list");
@@ -245,7 +314,8 @@ function renderLibrary() {
     refreshIcons();
     return;
   }
-  container.innerHTML = questions.map(question => {
+  const visibleQuestions = questions.slice(0, libraryVisibleLimit);
+  container.innerHTML = visibleQuestions.map(question => {
     const isWrong = state.wrongIds.includes(question.id);
     const mastered = state.masteredIds.includes(question.id);
     const response = state.openResponses[question.id];
@@ -253,12 +323,16 @@ function renderLibrary() {
       ? response?.completedAt ? ["mastered", "已完成"] : response?.content ? ["", "有草稿"] : ["", "未作答"]
       : mastered ? ["mastered", "已掌握"] : isWrong ? ["wrong", "待复盘"] : ["", "未作答"];
     return `<article class="question-row">
-      <div class="question-main"><span class="subject-stripe" style="background:${SUBJECTS[question.subject].color}"></span><div class="question-copy"><h3>${escapeHtml(question.question)}</h3><div class="question-meta"><span style="color:${SUBJECTS[question.subject].color}">${SUBJECTS[question.subject].label}</span><span>${escapeHtml(question.topic)}</span><span>${question.taskType || "选择题"}</span><span>${question.difficulty}</span></div></div></div>
+      <div class="question-main"><span class="subject-stripe" style="background:${SUBJECTS[question.subject].color}"></span><div class="question-copy"><h3>${escapeHtml(question.question)}</h3><div class="question-meta"><span style="color:${SUBJECTS[question.subject].color}">${SUBJECTS[question.subject].label}</span><span>${escapeHtml(question.topic)}</span><span>${question.taskType || questionTypeLabel(question)}</span><span>${question.difficulty}</span></div></div></div>
       <span class="status-pill ${status[0]}">${status[1]}</span>
       <button class="row-action" type="button" data-practice-id="${question.id}">作答<i data-lucide="arrow-right"></i></button>
     </article>`;
-  }).join("");
+  }).join("") + (visibleQuestions.length < questions.length ? `<div class="load-more-row"><button class="secondary-button" id="library-load-more" type="button">再显示 ${Math.min(100, questions.length - visibleQuestions.length)} 道<i data-lucide="chevron-down"></i></button><span>已显示 ${visibleQuestions.length} / ${questions.length}</span></div>` : "");
   $$('[data-practice-id]').forEach(button => button.addEventListener("click", () => startPractice(null, button.dataset.practiceId)));
+  $("#library-load-more")?.addEventListener("click", () => {
+    libraryVisibleLimit += 100;
+    renderLibrary();
+  });
   refreshIcons();
 }
 
@@ -289,6 +363,10 @@ function renderQuestion() {
     renderOpenQuestion(question);
     return;
   }
+  if (question.type === "fill") {
+    renderFillQuestion(question);
+    return;
+  }
   const percent = (practiceIndex / practiceQueue.length) * 100;
   $("#practice-stage").innerHTML = `<div class="practice-progress"><span>${practiceIndex + 1} / ${practiceQueue.length}</span><div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div><span>${SUBJECTS[question.subject].name} · ${question.topic}</span></div>
     <div class="quiz-paper">
@@ -303,6 +381,76 @@ function renderQuestion() {
   $("#quit-practice").addEventListener("click", endPractice);
   $("#flag-question").addEventListener("click", () => toggleFlag(question.id));
   refreshIcons();
+}
+
+function renderFillQuestion(question) {
+  const percent = (practiceIndex / practiceQueue.length) * 100;
+  $("#practice-stage").innerHTML = `<div class="practice-progress"><span>${practiceIndex + 1} / ${practiceQueue.length}</span><div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div><span>${SUBJECTS[question.subject].name} · ${question.topic}</span></div>
+    <div class="quiz-paper">
+      <div class="quiz-meta"><span style="color:${SUBJECTS[question.subject].color}">${SUBJECTS[question.subject].label} / ${question.difficulty}</span><button type="button" id="flag-question" class="${state.flaggedIds.includes(question.id) ? "active" : ""}" title="标记题目" aria-label="标记题目"><i data-lucide="bookmark"></i></button></div>
+      <div class="quiz-question">${escapeHtml(question.question)}</div>
+      <label class="fill-answer-field"><span>填写答案</span><input id="fill-answer" type="text" autocomplete="off" aria-label="填空题答案" placeholder="输入答案后提交" /></label>
+      <div id="explanation-slot"></div>
+      <div class="quiz-actions"><button class="secondary-button" id="quit-practice" type="button"><i data-lucide="x"></i>结束本组</button><button class="primary-button" id="submit-answer" type="button" disabled>提交答案<i data-lucide="arrow-right"></i></button></div>
+    </div>`;
+  const input = $("#fill-answer");
+  input.addEventListener("input", () => {
+    selectedAnswer = input.value;
+    $("#submit-answer").disabled = !input.value.trim();
+  });
+  input.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !$("#submit-answer").disabled) {
+      event.preventDefault();
+      submitFillAnswer(question);
+    }
+  });
+  $("#submit-answer").addEventListener("click", () => submitFillAnswer(question));
+  $("#quit-practice").addEventListener("click", endPractice);
+  $("#flag-question").addEventListener("click", () => toggleFlag(question.id));
+  input.focus();
+  refreshIcons();
+}
+
+function submitFillAnswer(question) {
+  if (answerSubmitted) {
+    advancePractice();
+    return;
+  }
+  const submitted = $("#fill-answer").value.trim();
+  if (!submitted) return;
+  const correct = isAcceptedFillAnswer(submitted, question);
+  answerSubmitted = true;
+  state.attempts.push({ id: newAttemptId(), questionId: question.id, subject: question.subject, correct, mode: "fill", points: correct ? 1 : 0, maxPoints: 1, scoreSource: "answer-key", answer: submitted, date: new Date().toISOString() });
+  if (correct) state.wrongIds = state.wrongIds.filter(id => id !== question.id);
+  else if (!state.wrongIds.includes(question.id)) state.wrongIds.push(question.id);
+  saveState();
+  const input = $("#fill-answer");
+  input.disabled = true;
+  input.classList.add(correct ? "correct" : "incorrect");
+  const reference = question.answers[0];
+  $("#explanation-slot").innerHTML = `<div class="explanation ${correct ? "" : "incorrect"}"><strong>${correct ? "回答正确" : `参考答案：${escapeHtml(reference)}`}</strong><p>${escapeHtml(question.explanation)}</p></div>`;
+  const submit = $("#submit-answer");
+  submit.disabled = false;
+  submit.innerHTML = practiceIndex < practiceQueue.length - 1 ? '下一题<i data-lucide="arrow-right"></i>' : '完成本组<i data-lucide="check"></i>';
+  renderDashboard(); renderReview(); renderAnalytics(); updateNavCounts(); refreshIcons();
+}
+
+function isAcceptedFillAnswer(value, question) {
+  const normalized = normalizeFillAnswer(value);
+  if (Number.isFinite(question.numericTolerance)) {
+    const submittedNumber = Number(normalized.replace(/,/g, ""));
+    if (Number.isFinite(submittedNumber)) {
+      return question.answers.some(answer => {
+        const expectedNumber = Number(normalizeFillAnswer(answer).replace(/,/g, ""));
+        return Number.isFinite(expectedNumber) && Math.abs(submittedNumber - expectedNumber) <= question.numericTolerance;
+      });
+    }
+  }
+  return question.answers.some(answer => normalizeFillAnswer(answer) === normalized);
+}
+
+function normalizeFillAnswer(value) {
+  return String(value).normalize("NFKC").trim().toLowerCase().replace(/[−–—]/g, "-").replace(/\s+/g, "");
 }
 
 function selectOption(index) {
@@ -417,6 +565,7 @@ function renderOpenReview(question, content) {
     <div class="grading-actions">
       <button class="primary-button compact" id="request-ai-grade" type="button" ${aiEndpoint ? "" : "disabled"} title="${aiEndpoint ? "使用安全后端阅卷" : "当前部署未连接 AI 阅卷后端"}"><i data-lucide="sparkles"></i>AI 阅卷</button>
       <button class="secondary-button compact" id="copy-review-prompt" type="button"><i data-lucide="copy"></i>复制批改提示词</button>
+      <button class="secondary-button compact" id="export-review-prompt" type="button"><i data-lucide="file-down"></i>导出阅卷 Prompt</button>
     </div>
     <div id="ai-grade-result"></div>
   </section>`;
@@ -427,6 +576,7 @@ function renderOpenReview(question, content) {
   }));
   $("#save-self-score").addEventListener("click", () => saveSelfGrade(question));
   $("#copy-review-prompt").addEventListener("click", () => copyReviewPrompt(question, content));
+  $("#export-review-prompt").addEventListener("click", () => exportReviewPrompt(question, content));
   if (aiEndpoint) $("#request-ai-grade").addEventListener("click", () => requestAIGrade(question, content));
   refreshIcons();
 }
@@ -513,13 +663,41 @@ function advancePractice() {
 }
 
 async function copyReviewPrompt(question, content) {
-  const prompt = `你是一名严格但具体的逻辑与写作教练。请批改下面的作答。\n\n按五个维度各给 0-4 分：概念清晰、论证结构、证据意识、反方理解、表达质量。请先指出答案中最好的一个判断，再指出最需要修正的一处跳步；提出一个能迫使我继续思考的问题；最后只示范改写一个关键段落，不要提供整篇标准答案。\n\n题目：${question.question}\n\n我的作答：${content}`;
+  const prompt = buildReviewPrompt(question, content);
   try {
     await navigator.clipboard.writeText(prompt);
     showToast("批改提示词已复制");
   } catch {
     showToast("浏览器未允许复制，请使用本地预览地址重试");
   }
+}
+
+function buildReviewPrompt(question, content, sequence = null) {
+  const response = state.openResponses[question.id] || {};
+  const existingGrade = response.grading
+    ? `\n\n已有评分（可复核）：${response.grading.total}/${response.grading.maxPoints}，来源 ${response.grading.source}。`
+    : "";
+  return `${sequence ? `# 作答 ${sequence}\n\n` : ""}你是一名严格但具体的逻辑与写作教练。请独立批改下面的作答。不要因为已有自评分而提高分数。\n\n评分规则：按五个维度各给 0-4 分：概念清晰、论证结构、证据意识、反方理解、表达质量，总分 20。请输出每个维度的分数和一句证据；指出答案中最好的一个判断；指出最需要修正的一处跳步；提出一个能迫使我继续思考的问题；最后只示范改写一个关键段落，不要提供整篇标准答案。\n\n学科：${SUBJECTS[question.subject].name}\n题型：${question.taskType || "开放题"}\n知识点：${question.topic}\n来源：${question.source || "个人题库"}\n${question.passage ? `\n阅读材料：\n${question.passage}\n` : ""}\n题目：\n${question.question}\n\n评分检查点：\n${(question.checkpoints || []).map(item => `- ${item}`).join("\n")}\n\n我的作答：\n${content}${existingGrade}`;
+}
+
+function exportReviewPrompt(question, content) {
+  downloadText(`知行阅卷Prompt-${question.id}-${todayKey()}.md`, buildReviewPrompt(question, content), "text/markdown;charset=utf-8");
+  showToast("本题阅卷 Prompt 已导出");
+}
+
+function exportAllReviewPrompts() {
+  const entries = Object.entries(state.openResponses)
+    .filter(([, response]) => response?.content?.trim())
+    .map(([questionId, response]) => ({ question: getQuestions().find(item => item.id === questionId), response }))
+    .filter(item => item.question);
+  if (!entries.length) {
+    showToast("还没有可导出的开放题作答");
+    return;
+  }
+  const header = `# 知行开放题批量阅卷\n\n共 ${entries.length} 份作答。请逐题独立评分，不要让前一题的表现影响后一题；最后输出一个总表，列出题目 ID、总分、最优维度和优先改进项。\n\n---\n\n`;
+  const body = entries.map((entry, index) => buildReviewPrompt(entry.question, entry.response.content, `${index + 1} / ${entries.length} · ${entry.question.id}`)).join("\n\n---\n\n");
+  downloadText(`知行批量阅卷Prompt-${todayKey()}.md`, header + body, "text/markdown;charset=utf-8");
+  showToast(`已导出 ${entries.length} 份开放题作答`);
 }
 
 function endPractice(completed = false) {
@@ -607,7 +785,7 @@ function renderAnalytics() {
   $("#analytics-overview").innerHTML = [
     [total, "累计作答", "每一次都计入学习记录"],
     [compositeScore === null ? "—" : compositeScore + "%", "综合得分", scoredCount ? `${scoredCount} 次作答已有评分` : "完成判分或自评后生成"],
-    [graded.length ? accuracy + "%" : "—", "选择题正确率", graded.length ? `${correct} / ${graded.length} 道回答正确` : "完成选择题后生成"],
+    [graded.length ? accuracy + "%" : "—", "客观题正确率", graded.length ? `${correct} / ${graded.length} 道回答正确` : "完成选择或填空题后生成"],
     [openCompleted, "开放题完成", `${Object.keys(state.openResponses).length} 道已留有作答`]
   ].map(([value, label, copy]) => `<div class="analytics-stat"><span>${label}</span><strong>${value}</strong><small>${copy}</small></div>`).join("");
   $("#performance-list").innerHTML = Object.entries(SUBJECTS).map(([key, subject]) => {
@@ -632,22 +810,61 @@ function renderAnalytics() {
 
 function openQuestionModal() {
   $("#question-form").reset();
+  updateQuestionTypeFields();
   $("#question-modal").showModal();
 }
 
 function handleQuestionForm(event) {
-  const submitter = event.submitter;
-  if (submitter?.value === "cancel") return;
   event.preventDefault();
   const form = event.currentTarget;
   if (!form.reportValidity()) return;
   const data = new FormData(form);
-  state.customQuestions.push({
-    id: `custom-${Date.now()}`, subject: data.get("subject"), topic: data.get("topic").trim(), difficulty: "自定义", type: "choice", taskType: "选择题",
-    question: data.get("question").trim(), options: [data.get("optionA"), data.get("optionB"), data.get("optionC"), data.get("optionD")].map(value => value.trim()),
-    answer: Number(data.get("answer")), explanation: data.get("explanation").trim()
-  });
-  saveState(); form.reset(); $("#question-modal").close(); renderLibrary(); showToast("题目已加入你的个人题库");
+  const type = data.get("type") === "fill" ? "fill" : "choice";
+  const question = {
+    id: `custom-${Date.now()}`,
+    subject: data.get("subject"),
+    topic: data.get("topic").trim(),
+    difficulty: "自定义",
+    type,
+    taskType: questionTypeLabel({ type }),
+    question: data.get("question").trim(),
+    explanation: data.get("explanation").trim(),
+    source: "个人录入"
+  };
+  if (type === "fill") {
+    question.answers = data.get("acceptedAnswers").split("|").map(value => value.trim()).filter(Boolean);
+    if (!question.answers.length) {
+      showToast("请至少填写一个有效答案");
+      return;
+    }
+    const tolerance = data.get("numericTolerance").trim();
+    if (tolerance) question.numericTolerance = Number(tolerance);
+  } else {
+    question.options = [data.get("optionA"), data.get("optionB"), data.get("optionC"), data.get("optionD")].map(value => value.trim());
+    question.answer = Number(data.get("answer"));
+  }
+  state.customQuestions.push(question);
+  saveState(); closeQuestionModal(); renderLibrary(); updateNavCounts(); showToast("题目已加入你的个人题库");
+}
+
+function updateQuestionTypeFields() {
+  const isFill = $("#question-type").value === "fill";
+  $("#choice-question-fields").classList.toggle("hidden", isFill);
+  $("#fill-question-fields").classList.toggle("hidden", !isFill);
+  $$('input, select', $("#choice-question-fields")).forEach(field => { field.disabled = isFill; });
+  $$('input', $("#fill-question-fields")).forEach(field => { field.disabled = !isFill; });
+}
+
+function closeQuestionModal() {
+  const modal = $("#question-modal");
+  if (modal.open) modal.close();
+  $("#question-form").reset();
+  updateQuestionTypeFields();
+}
+
+function closeCopyrightModal() {
+  const modal = $("#copyright-modal");
+  if (modal.open) modal.close();
 }
 
 async function handleBankImport(file) {
@@ -684,7 +901,7 @@ async function handleBankImport(file) {
 
 function normalizeImportedQuestion(question, bankId, index) {
   const position = index + 1;
-  const type = question.type === "open" ? "open" : "choice";
+  const type = ["open", "fill"].includes(question.type) ? question.type : "choice";
   if (!question.id || !SUBJECTS[question.subject] || !question.topic || !question.question) {
     throw new Error(`第 ${position} 题缺少 id、subject、topic 或 question`);
   }
@@ -693,12 +910,19 @@ function normalizeImportedQuestion(question, bankId, index) {
     id: `bank:${bankId}:${question.id}`,
     type,
     difficulty: question.difficulty || "自定义",
-    taskType: question.taskType || (type === "open" ? "开放题" : "选择题"),
+    taskType: question.taskType || questionTypeLabel({ type }),
     source: question.source || bankId
   };
   if (type === "choice") {
     if (!Array.isArray(question.options) || question.options.length < 2 || !Number.isInteger(question.answer) || question.answer < 0 || question.answer >= question.options.length || !question.explanation) {
       throw new Error(`第 ${position} 题的选项、答案索引或解析无效`);
+    }
+  } else if (type === "fill") {
+    if (!Array.isArray(question.answers) || !question.answers.length || question.answers.some(answer => !String(answer).trim()) || !question.explanation) {
+      throw new Error(`第 ${position} 道填空题的可接受答案或解析无效`);
+    }
+    if (question.numericTolerance !== undefined && (!Number.isFinite(question.numericTolerance) || question.numericTolerance < 0)) {
+      throw new Error(`第 ${position} 道填空题的数值容差无效`);
     }
   } else if (!Array.isArray(question.checkpoints) || question.checkpoints.length < 3) {
     throw new Error(`第 ${position} 道开放题至少需要三个评分检查点`);
@@ -707,9 +931,7 @@ function normalizeImportedQuestion(question, bankId, index) {
 }
 
 function exportData() {
-  const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), state }, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a"); link.href = url; link.download = `知行学习数据-${todayKey()}.json`; link.click(); URL.revokeObjectURL(url);
+  downloadText(`知行学习数据-${todayKey()}.json`, JSON.stringify({ exportedAt: new Date().toISOString(), state }, null, 2), "application/json;charset=utf-8");
   showToast("学习数据已导出");
 }
 
@@ -724,6 +946,22 @@ async function resetData() {
 function updateNavCounts() {
   $("#wrong-count").textContent = state.wrongIds.length;
   $("#library-count").textContent = getQuestions().length;
+}
+
+function questionTypeLabel(question) {
+  if (question.type === "open") return "开放题";
+  if (question.type === "fill") return "填空题";
+  return "选择题";
+}
+
+function downloadText(filename, content, type = "text/plain;charset=utf-8") {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function attemptScorePercent(attempt) {

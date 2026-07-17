@@ -2,17 +2,18 @@
 
 [![Deploy GitHub Pages](https://github.com/machenyu2023/zhixing-study-atelier-pages/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/machenyu2023/zhixing-study-atelier-pages/actions/workflows/deploy-pages.yml)
 
-面向个人长期学习的刷题、思辨、写作与复盘网站。目前覆盖雅思、逻辑、写作和数学，内置 55 道题，其中包括一套 14 天逻辑写作训练。
+面向个人长期学习的刷题、思辨、写作与复盘网站。目前覆盖雅思、逻辑、写作和数学，内置 1020 道题，其中数学重点为优化、矩阵论、随机过程和高等概率论。
 
 ## 核心能力
 
-- 13 道可即时判分的雅思、逻辑与数学选择题。
-- 42 道材料阅读、论证简答和微写作开放题。
+- 228 道可即时判分的雅思、逻辑与数学选择题。
+- 705 道支持多答案和数值容差的填空题。
+- 87 道材料阅读、论证简答和写作开放题。
 - 选择题解析、错题自动收集、重做和掌握归档。
 - 开放题草稿、建议字数、五维自评和可选 AI 阅卷。
 - 统一成绩：每题先归一化为百分制，再计算平均分，避免不同题型权重失真。
 - IndexedDB 本地存储，自动迁移旧版 `localStorage` 数据。
-- JSON 题库批量导入、学习数据导出和 GitHub Pages 自动部署。
+- JSON 题库批量导入、学习数据导出、AI 阅卷 Prompt 导出和 GitHub Pages 自动部署。
 
 ## 在线部署
 
@@ -39,6 +40,12 @@ npm test
 npm run build
 ```
 
+重新生成 965 道参数化扩展题：
+
+```powershell
+npm run generate:bank
+```
+
 ## AI 阅卷
 
 AI 阅卷必须通过服务端转发，不能把 OpenAI API Key 放进 GitHub Pages。复制 `.env.example` 中的变量到本机环境，设置 `OPENAI_API_KEY` 后运行 `npm start`，本地页面即可调用 `/api/grade`。
@@ -49,6 +56,8 @@ AI 阅卷必须通过服务端转发，不能把 OpenAI API Key 放进 GitHub Pa
 
 ## 扩充题库
 
-复制 [example-bank.json](data/question-banks/example-bank.json)，按 [QUESTION_BANKS.md](docs/QUESTION_BANKS.md) 填写题目，然后在网站“题库”页面选择“导入题库”。选择题和开放题可以放在同一个文件中。
+复制 [example-bank.json](data/question-banks/example-bank.json)，按 [QUESTION_BANKS.md](docs/QUESTION_BANKS.md) 填写题目，然后在网站“题库”页面选择“导入题库”。选择题、填空题和开放题可以放在同一个文件中。
+
+内置扩展题库由 [generate-open-bank.mjs](scripts/generate-open-bank.mjs) 确定性生成。公开资源接入与抓取边界见 [OPEN_BANK_PIPELINE.md](docs/OPEN_BANK_PIPELINE.md)，版权和来源规则见 [COPYRIGHT.md](docs/COPYRIGHT.md)。
 
 所有学习数据默认只保存在当前浏览器，不会随 GitHub 部署上传。
