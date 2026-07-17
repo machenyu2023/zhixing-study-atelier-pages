@@ -324,7 +324,7 @@ function renderKnowledge() {
   const nextLesson = lessons.find(lesson => !completed.has(lesson.id));
   $("#knowledge-completed").textContent = completeCount;
   $("#knowledge-progress-bar").style.width = `${Math.round(completeCount / lessons.length * 100)}%`;
-  $("#knowledge-next-label").textContent = nextLesson ? `下一节：${nextLesson.title}` : "14 节课程已经全部完成";
+  $("#knowledge-next-label").textContent = nextLesson ? `下一节：${nextLesson.title}` : `${lessons.length} 节课程已经全部完成`;
   $("#lesson-filter-meta").textContent = lessonQuery ? `找到 ${filtered.length} 节` : `${lessons.length} 节课程`;
   $("#lesson-list").innerHTML = filtered.length ? filtered.map(lesson => {
     const isComplete = completed.has(lesson.id);
@@ -417,6 +417,7 @@ function renderLibrary() {
   if (libraryFilter === "wrong") questions = questions.filter(question => state.wrongIds.includes(question.id));
   else if (libraryFilter === "open") questions = questions.filter(question => question.type === "open");
   else if (libraryFilter === "fill") questions = questions.filter(question => question.type === "fill");
+  else if (libraryFilter === "workbook-core") questions = questions.filter(question => question.topic.startsWith("习题册 · 卷"));
   else if (libraryFilter !== "all") questions = questions.filter(question => question.subject === libraryFilter);
   $("#question-result-count").textContent = `${questions.length} 道题目`;
   const container = $("#question-list");

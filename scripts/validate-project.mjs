@@ -36,7 +36,7 @@ if (generatedBank.schemaVersion !== 1 || generatedBank.bank?.id !== "open-practi
   errors.push(`Expected the generated open-practice bank with 1225 questions`);
 }
 const generatedTypeCounts = Object.fromEntries(["choice", "fill", "open"].map(type => [type, generatedBank.questions.filter(question => question.type === type).length]));
-for (const [type, expected] of Object.entries({ choice: 475, fill: 705, open: 45 })) {
+for (const [type, expected] of Object.entries({ choice: 475, fill: 675, open: 75 })) {
   if (generatedTypeCounts[type] !== expected) errors.push(`Expected ${expected} generated ${type} questions, found ${generatedTypeCounts[type]}`);
 }
 if (allQuestions.length !== 1280) errors.push(`Expected 1280 total questions, found ${allQuestions.length}`);
@@ -45,11 +45,22 @@ if (generatedLogic.length !== 420) errors.push(`Expected 420 generated logic que
 const totalLogic = allQuestions.filter(question => question.subject === "logic").length;
 if (totalLogic !== 452) errors.push(`Expected 452 total logic questions, found ${totalLogic}`);
 const requiredLogicTopicFamilies = [
-  "论证结构", "Toulmin 模型", "谬误识别", "因果与统计", "概率与不确定", "认知偏误",
+  "习题册", "论证结构", "Toulmin 模型", "谬误识别", "因果与统计", "概率与不确定", "认知偏误",
   "类比与归纳", "语言与定义", "价值权衡", "修辞与说服", "提问与对话", "心智模型"
 ];
 for (const family of requiredLogicTopicFamilies) {
   if (!generatedLogic.some(question => question.topic.startsWith(family))) errors.push(`Generated logic bank is missing topic family: ${family}`);
+}
+if (generatedLogic.some(question => question.topic === "数列规律")) errors.push("Generated logic bank must not include unrelated number-sequence drills");
+const workbookCoreQuestions = generatedLogic.filter(question => question.topic.startsWith("习题册 · 卷"));
+if (workbookCoreQuestions.length !== 60) errors.push(`Expected 60 workbook-core questions, found ${workbookCoreQuestions.length}`);
+for (const [type, expected] of Object.entries({ fill: 30, open: 30 })) {
+  const count = workbookCoreQuestions.filter(question => question.type === type).length;
+  if (count !== expected) errors.push(`Expected ${expected} workbook-core ${type} questions, found ${count}`);
+}
+for (const volume of ["卷一", "卷二", "卷三", "卷四", "卷五", "卷六"]) {
+  const count = workbookCoreQuestions.filter(question => question.topic.includes(volume)).length;
+  if (count !== 10) errors.push(`Expected 10 workbook-core questions for ${volume}, found ${count}`);
 }
 const advancedMathCounts = Object.fromEntries(["优化", "矩阵论", "随机过程", "高等概率论"].map(prefix => [prefix, generatedBank.questions.filter(question => question.subject === "math" && question.topic.startsWith(prefix)).length]));
 for (const [topic, count] of Object.entries(advancedMathCounts)) {
@@ -71,8 +82,8 @@ for (const question of coreQuestions.filter(question => question.subject === "ma
 for (const question of generatedBank.questions) {
   if (!question.source || !question.license) errors.push(`Generated question needs source and license metadata: ${question.id}`);
 }
-if (!Array.isArray(knowledgeLessons) || knowledgeLessons.length !== 14) {
-  errors.push(`Expected 14 knowledge lessons, found ${knowledgeLessons?.length ?? 0}`);
+if (!Array.isArray(knowledgeLessons) || knowledgeLessons.length !== 17) {
+  errors.push(`Expected 17 knowledge lessons, found ${knowledgeLessons?.length ?? 0}`);
 } else {
   const lessonIds = new Set();
   const lessonOrders = new Set();
