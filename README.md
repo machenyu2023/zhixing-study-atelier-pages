@@ -2,12 +2,13 @@
 
 [![Deploy GitHub Pages](https://github.com/machenyu2023/zhixing-study-atelier-pages/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/machenyu2023/zhixing-study-atelier-pages/actions/workflows/deploy-pages.yml)
 
-面向个人长期学习的知识学习、刷题、思辨、写作与复盘网站。目前覆盖雅思、逻辑、写作和数学，内置 1280 道题和 17 节逻辑思维知识课。其中逻辑题共 452 道，数学重点为优化、矩阵论、随机过程和高等概率论。
+面向个人长期学习的教材阅读、刷题、思辨、写作与复盘网站。目前覆盖雅思、逻辑、写作和数学，内置 1280 道题，并完整收录《系统学习手册》13 章和《每日训练习题册》使用指南及 6 卷正文。其中逻辑题共 452 道，数学重点为优化、矩阵论、随机过程和高等概率论。
 
 ## 核心能力
 
-- 17 节知识课，以《系统学习手册》13 章和《每日训练习题册》6 卷为主轴，覆盖课程进度、配套练习和四周复训路径。
-- 60 道“六卷核心”题可独立筛选，包括 30 道精炼填空和 30 道情境开放题。
+- 忠实呈现两份用户提供教材的原有标题、段落、表格、提示框、题型分区、参考答案与自评结构，不再使用摘要式知识课。
+- 13 章手册和 6 卷习题可分别记录进度；习题册横线可直接填写并自动保存在本机。
+- 60 道“习题册衍生”题可独立筛选，包括 30 道精炼填空和 30 道情境开放题；它们用于配套练习，不冒充教材原题。
 - 488 道可即时判分的雅思、逻辑与数学选择题。
 - 675 道支持多答案和数值容差的填空题。
 - 117 道材料阅读、论证简答和写作开放题。
@@ -47,6 +48,14 @@ npm run build
 ```powershell
 npm run generate:bank
 ```
+
+如需从本机的两份原始 HTML 重新提取教材正文：
+
+```powershell
+npm run extract:curriculum -- <学习手册.html> <习题册.html>
+```
+
+原始 HTML/PDF 文件本身不进入仓库；生成的 `data/curriculum/curriculum-source.json` 是完整正文快照，会被构建并随 GitHub Pages 分发。公开部署前应确认拥有相应的公开传播授权。
 
 ## AI 阅卷
 

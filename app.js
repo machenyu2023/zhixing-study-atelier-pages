@@ -14,6 +14,23 @@ const SCORE_DIMENSIONS = [
 ];
 
 const BUNDLED_BANK_URLS = ["data/question-banks/open-practice-bank.json"];
+const CURRICULUM_URL = "data/curriculum/curriculum-source.json";
+const VOLUME_NUMERALS = ["一", "二", "三", "四", "五", "六"];
+const HANDBOOK_PRACTICE_TOPICS = {
+  1: ["论证结构", "提问与对话"],
+  2: ["条件推理", "三段论", "论证结构"],
+  3: ["谬误识别"],
+  4: ["Toulmin 模型", "论证结构"],
+  5: ["因果与统计", "习题册 · 卷二"],
+  6: ["概率与不确定"],
+  7: ["认知偏误"],
+  8: ["论证结构", "修辞与说服"],
+  9: ["心智模型", "类比与归纳", "价值权衡"],
+  10: ["提问与对话", "修辞与说服"],
+  11: ["习题册"],
+  12: ["语言与定义", "谬误识别", "概率与不确定"],
+  13: ["习题册"]
+};
 
 const QUESTIONS = [
   { id: "i1", subject: "ielts", topic: "语境词义", difficulty: "基础", question: "In the sentence “The proposal was met with considerable scepticism”, the word “scepticism” is closest in meaning to:", options: ["enthusiasm", "doubt", "confusion", "approval"], answer: 1, explanation: `“Be met with scepticism” 表示“受到质疑”。scepticism 的核心含义是 doubt，即对真实性或可行性持怀疑态度。` },
@@ -40,24 +57,28 @@ const WRITING_PROMPTS = [
 
 const DAILY_TASKS = [
   { id: "t1", subject: "ielts", title: "完成 5 道阅读推断题", meta: "25 分钟 · 立即练习" },
-  { id: "t2", subject: "logic", title: "学习 1 节知识课并完成配套练习", meta: "20 分钟 · 知识课" },
+  { id: "t2", subject: "logic", title: "学习手册 1 章或完成习题册 1 卷", meta: "20 分钟 · 原版教材" },
   { id: "t3", subject: "writing", title: "写一个清晰的开头段", meta: "20 分钟 · 写作室" },
   { id: "t4", subject: "math", title: "完成 3 道高级数学题", meta: "20 分钟 · 四模块轮换" }
 ];
 
 const DEFAULT_STATE = {
   attempts: [], wrongIds: [], masteredIds: [], flaggedIds: [], customQuestions: [],
-  completedTasks: [], completedLessons: [], selectedLesson: "clear-thinking-map",
+  completedTasks: [],
+  sourceCompletedChapters: [], sourceCompletedVolumes: [], sourceWorkbookAnswers: {},
+  sourceCurriculumMode: "handbook", sourceCurriculumSelected: { handbook: "handbook-1", workbook: "workbook-intro" },
   writingDrafts: {}, openResponses: {}, importedBanks: [], rubric: {}, selectedPrompt: "w1"
 };
 
 let state = { ...DEFAULT_STATE };
 let bundledQuestions = [];
 let bundledBanks = [];
+let curriculum = null;
 let currentView = "today";
 let libraryFilter = "all";
 let libraryVisibleLimit = 100;
-let lessonQuery = "";
+let curriculumQuery = "";
+let curriculumSaveTimer = null;
 let practiceQueue = [];
 let practiceIndex = 0;
 let selectedAnswer = null;
@@ -86,9 +107,28 @@ async function loadState() {
     ...loaded,
     openResponses: loaded.openResponses || {},
     importedBanks: loaded.importedBanks || [],
-    completedLessons: Array.isArray(loaded.completedLessons) ? loaded.completedLessons : [],
-    selectedLesson: loaded.selectedLesson || DEFAULT_STATE.selectedLesson
+    sourceCompletedChapters: Array.isArray(loaded.sourceCompletedChapters) ? loaded.sourceCompletedChapters : [],
+    sourceCompletedVolumes: Array.isArray(loaded.sourceCompletedVolumes) ? loaded.sourceCompletedVolumes : [],
+    sourceWorkbookAnswers: loaded.sourceWorkbookAnswers || {},
+    sourceCurriculumMode: loaded.sourceCurriculumMode === "workbook" ? "workbook" : "handbook",
+    sourceCurriculumSelected: { ...DEFAULT_STATE.sourceCurriculumSelected, ...(loaded.sourceCurriculumSelected || {}) }
   };
+}
+
+async function loadCurriculum() {
+  try {
+    const response = await fetch(CURRICULUM_URL, { cache: "no-cache" });
+    if (!response.ok) throw new Error(`无法读取教材数据（${response.status}）`);
+    const payload = await response.json();
+    if (payload.schemaVersion !== 1 || payload.handbook?.chapters?.length !== 13 || payload.workbook?.volumes?.length !== 6) {
+      throw new Error("教材数据结构不完整");
+    }
+    curriculum = payload;
+  } catch (error) {
+    curriculum = null;
+    console.error(error);
+    showToast("教材正文加载失败，请稍后刷新");
+  }
 }
 
 async function loadBundledQuestionBanks() {
@@ -131,7 +171,7 @@ function saveState() {
 
 async function init() {
   state = await loadState();
-  await loadBundledQuestionBanks();
+  await Promise.all([loadBundledQuestionBanks(), loadCurriculum()]);
   setDate();
   bindNavigation();
   bindActions();
@@ -163,10 +203,11 @@ function bindActions() {
     libraryVisibleLimit = 100;
     renderLibrary();
   });
-  $("#lesson-search").addEventListener("input", event => {
-    lessonQuery = event.target.value.trim().toLowerCase();
-    renderKnowledge();
+  $("#curriculum-search").addEventListener("input", event => {
+    curriculumQuery = event.target.value.trim().toLowerCase();
+    renderCurriculum();
   });
+  $$('[data-curriculum-mode]').forEach(button => button.addEventListener("click", () => setCurriculumMode(button.dataset.curriculumMode)));
   $$("#library-filters .filter-chip").forEach(button => button.addEventListener("click", () => {
     libraryFilter = button.dataset.filter;
     libraryVisibleLimit = 100;
@@ -224,9 +265,9 @@ function showView(view) {
   currentView = view;
   $$(".view").forEach(section => section.classList.toggle("active", section.id === `view-${view}`));
   $$(".nav-item").forEach(button => button.classList.toggle("active", button.dataset.view === view));
-  const titles = { today: "今日学习", learn: "知识课", library: "我的题库", practice: "专注练习", review: "错题复盘", writing: "写作室", analytics: "学习数据" };
+  const titles = { today: "今日学习", learn: "学习教材", library: "我的题库", practice: "专注练习", review: "错题复盘", writing: "写作室", analytics: "学习数据" };
   $("#view-title").textContent = titles[view];
-  if (view === "learn") renderKnowledge();
+  if (view === "learn") renderCurriculum();
   if (view === "library") renderLibrary();
   if (view === "review") renderReview();
   if (view === "analytics") renderAnalytics();
@@ -237,7 +278,7 @@ function showView(view) {
 
 function renderAll() {
   renderDashboard();
-  renderKnowledge();
+  renderCurriculum();
   renderLibrary();
   renderReview();
   renderWriting();
@@ -310,96 +351,122 @@ function renderSubjectProgress() {
   }).join("");
 }
 
-function renderKnowledge() {
-  const lessons = typeof KNOWLEDGE_LESSONS === "undefined" ? [] : KNOWLEDGE_LESSONS;
-  if (!lessons.length) return;
-  const completed = new Set(state.completedLessons);
-  const filtered = lessons.filter(lesson => {
-    const searchable = [lesson.chapter, lesson.title, lesson.subtitle, lesson.summary, ...lesson.objectives, ...lesson.concepts.flatMap(item => [item.term, item.english, item.definition])].join(" ").toLowerCase();
-    return searchable.includes(lessonQuery);
+function curriculumEntries(mode = state.sourceCurriculumMode) {
+  if (!curriculum) return [];
+  return mode === "workbook" ? [curriculum.workbook.intro, ...curriculum.workbook.volumes] : curriculum.handbook.chapters;
+}
+
+function curriculumCompletion(mode = state.sourceCurriculumMode) {
+  return new Set(mode === "workbook" ? state.sourceCompletedVolumes : state.sourceCompletedChapters);
+}
+
+function curriculumItemLabel(mode, item) {
+  if (mode === "handbook") return `第 ${item.number} 章`;
+  return item.id === "workbook-intro" ? "使用指南" : `卷${VOLUME_NUMERALS[item.number - 1]}`;
+}
+
+function renderCurriculum() {
+  const reader = $("#curriculum-reader");
+  if (!curriculum) {
+    $("#curriculum-list").innerHTML = '<div class="source-empty"><i data-lucide="book-x"></i><p>教材正文暂时无法读取</p></div>';
+    reader.innerHTML = '<div class="source-empty"><h2>教材加载失败</h2><p>请刷新页面后重试。</p></div>';
+    refreshIcons();
+    return;
+  }
+
+  const mode = state.sourceCurriculumMode;
+  const entries = curriculumEntries(mode);
+  const completed = curriculumCompletion(mode);
+  const filtered = entries.filter(item => `${item.title} ${item.subtitle || ""} ${item.content}`.toLowerCase().includes(curriculumQuery));
+  let selected = entries.find(item => item.id === state.sourceCurriculumSelected[mode]) || entries[0];
+  if (curriculumQuery && !filtered.some(item => item.id === selected.id)) selected = filtered[0] || selected;
+
+  const totalCompleted = state.sourceCompletedChapters.length + state.sourceCompletedVolumes.length;
+  const allItems = [...curriculum.handbook.chapters, ...curriculum.workbook.volumes];
+  const nextItem = allItems.find(item => !state.sourceCompletedChapters.includes(item.id) && !state.sourceCompletedVolumes.includes(item.id));
+  $("#curriculum-completed").textContent = totalCompleted;
+  $("#curriculum-progress-bar").style.width = `${Math.round(totalCompleted / allItems.length * 100)}%`;
+  $("#curriculum-progress-label").textContent = nextItem ? `下一项：${nextItem.title}` : "手册与习题册已经完成一轮";
+  $("#curriculum-filter-meta").textContent = curriculumQuery ? `找到 ${filtered.length} 项` : mode === "handbook" ? "13 章完整正文" : "使用指南 · 6 卷训练";
+  $$('[data-curriculum-mode]').forEach(button => {
+    const active = button.dataset.curriculumMode === mode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
   });
-  let selected = lessons.find(lesson => lesson.id === state.selectedLesson) || lessons[0];
-  if (lessonQuery && !filtered.some(lesson => lesson.id === selected.id)) selected = filtered[0] || selected;
-  const completeCount = lessons.filter(lesson => completed.has(lesson.id)).length;
-  const nextLesson = lessons.find(lesson => !completed.has(lesson.id));
-  $("#knowledge-completed").textContent = completeCount;
-  $("#knowledge-progress-bar").style.width = `${Math.round(completeCount / lessons.length * 100)}%`;
-  $("#knowledge-next-label").textContent = nextLesson ? `下一节：${nextLesson.title}` : `${lessons.length} 节课程已经全部完成`;
-  $("#lesson-filter-meta").textContent = lessonQuery ? `找到 ${filtered.length} 节` : `${lessons.length} 节课程`;
-  $("#lesson-list").innerHTML = filtered.length ? filtered.map(lesson => {
-    const isComplete = completed.has(lesson.id);
-    return `<button class="lesson-nav-item ${lesson.id === selected.id ? "active" : ""} ${isComplete ? "completed" : ""}" type="button" data-lesson-id="${lesson.id}">
-      <span>${String(lesson.order).padStart(2, "0")}</span><span><b>${escapeHtml(lesson.title)}</b><small>${escapeHtml(lesson.chapter)} · ${lesson.duration} 分钟</small></span><i data-lucide="${isComplete ? "circle-check-big" : "chevron-right"}"></i>
+
+  $("#curriculum-list").innerHTML = filtered.length ? filtered.map(item => {
+    const isComplete = completed.has(item.id);
+    return `<button class="source-nav-item ${item.id === selected.id ? "active" : ""} ${isComplete ? "completed" : ""}" type="button" data-curriculum-id="${escapeHtml(item.id)}">
+      <span>${escapeHtml(curriculumItemLabel(mode, item))}</span><span><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.subtitle || item.meta || (item.id === "workbook-intro" ? "每日流程 · 自评量规 · 思考工具" : "完整卷次"))}</small></span><i data-lucide="${isComplete ? "circle-check-big" : "chevron-right"}"></i>
     </button>`;
-  }).join("") : `<div class="lesson-empty"><i data-lucide="search-x"></i><p>没有匹配的课程</p></div>`;
-  $$('[data-lesson-id]').forEach(button => button.addEventListener("click", () => selectLesson(button.dataset.lessonId)));
-  renderLessonReader(selected, lessons, completed);
+  }).join("") : '<div class="source-empty"><i data-lucide="search-x"></i><p>没有匹配的内容</p></div>';
+  $$('[data-curriculum-id]').forEach(button => button.addEventListener("click", () => selectCurriculumItem(button.dataset.curriculumId)));
+  renderCurriculumReader(selected, entries, completed, mode);
   refreshIcons();
 }
 
-function renderLessonReader(lesson, lessons, completed) {
-  const lessonIndex = lessons.findIndex(item => item.id === lesson.id);
-  const isComplete = completed.has(lesson.id);
-  $("#lesson-reader").innerHTML = `<header class="lesson-header">
-    <div class="lesson-header-meta"><span>${escapeHtml(lesson.chapter)}</span><span>${lesson.duration} 分钟</span><span>${isComplete ? "已完成" : "待学习"}</span></div>
-    <h2>${escapeHtml(lesson.title)}</h2>
-    <p class="lesson-subtitle">${escapeHtml(lesson.subtitle)}</p>
-    <p class="lesson-summary">${escapeHtml(lesson.summary)}</p>
-  </header>
-  <section class="lesson-section">
-    <div class="lesson-section-title"><span>01</span><div><small>LEARNING GOALS</small><h3>学完这一节，你应该能做到</h3></div></div>
-    <ul class="lesson-objectives">${lesson.objectives.map(item => `<li><i data-lucide="check"></i><span>${escapeHtml(item)}</span></li>`).join("")}</ul>
-  </section>
-  <section class="lesson-section">
-    <div class="lesson-section-title"><span>02</span><div><small>KEY CONCEPTS</small><h3>核心概念</h3></div></div>
-    <div class="concept-grid">${lesson.concepts.map(item => `<article><div><b>${escapeHtml(item.term)}</b><small>${escapeHtml(item.english)}</small></div><p>${escapeHtml(item.definition)}</p></article>`).join("")}</div>
-  </section>
-  <section class="lesson-section">
-    <div class="lesson-section-title"><span>03</span><div><small>METHOD</small><h3>${escapeHtml(lesson.method.title)}</h3></div></div>
-    <div class="method-steps">${lesson.method.steps.map((step, index) => `<div><span>${index + 1}</span><div><b>${escapeHtml(step.title)}</b><p>${escapeHtml(step.body)}</p></div></div>`).join("")}</div>
-  </section>
-  <section class="lesson-section lesson-example">
-    <div class="lesson-section-title"><span>04</span><div><small>WORKED EXAMPLE</small><h3>${escapeHtml(lesson.example.title)}</h3></div></div>
-    <blockquote>${escapeHtml(lesson.example.prompt)}</blockquote>
-    <p>${escapeHtml(lesson.example.analysis)}</p>
-  </section>
-  <section class="lesson-reflection"><i data-lucide="message-circle-question"></i><div><span>课后追问</span><p>${escapeHtml(lesson.reflection)}</p></div></section>
-  <footer class="lesson-actions">
-    <div class="lesson-pagination">
-      <button class="icon-button" type="button" data-lesson-move="previous" aria-label="上一节" title="上一节" ${lessonIndex === 0 ? "disabled" : ""}><i data-lucide="arrow-left"></i></button>
-      <button class="icon-button" type="button" data-lesson-move="next" aria-label="下一节" title="下一节" ${lessonIndex === lessons.length - 1 ? "disabled" : ""}><i data-lucide="arrow-right"></i></button>
-    </div>
-    <div><button class="secondary-button" type="button" id="lesson-practice"><i data-lucide="dumbbell"></i>做本节练习</button><button class="primary-button" type="button" id="lesson-complete"><i data-lucide="${isComplete ? "rotate-ccw" : "check"}"></i>${isComplete ? "取消完成" : "标记完成"}</button></div>
-  </footer>
-  <p class="lesson-source">内容整理自 ${escapeHtml(lesson.source)}，为站内学习用途重新编写。</p>`;
-  $("#lesson-complete").addEventListener("click", () => toggleLessonCompletion(lesson.id));
-  $("#lesson-practice").addEventListener("click", () => startLessonPractice(lesson.id));
-  $$('[data-lesson-move]').forEach(button => button.addEventListener("click", () => {
-    const targetIndex = button.dataset.lessonMove === "previous" ? lessonIndex - 1 : lessonIndex + 1;
-    if (lessons[targetIndex]) selectLesson(lessons[targetIndex].id);
+function renderCurriculumReader(item, entries, completed, mode) {
+  const index = entries.findIndex(entry => entry.id === item.id);
+  const isGuide = item.id === "workbook-intro";
+  const isComplete = completed.has(item.id);
+  const content = mode === "handbook"
+    ? CurriculumRenderer.renderHandbook(item.content)
+    : CurriculumRenderer.renderWorkbook(item.content, item.id, state.sourceWorkbookAnswers);
+  const header = mode === "handbook"
+    ? `<header class="source-doc-header"><div><span>${escapeHtml(curriculumItemLabel(mode, item))}</span><span>${isComplete ? "已完成" : "待学习"}</span></div><h2>${escapeHtml(item.title)}</h2><p>${escapeHtml(item.subtitle)}</p></header>`
+    : `<div class="source-workbook-strip"><span>每日训练习题册</span><b>${escapeHtml(curriculumItemLabel(mode, item))}</b><small>${isGuide ? "阅读后开始六卷训练" : isComplete ? "已完成" : "作答自动保存"}</small></div>`;
+  $("#curriculum-reader").innerHTML = `${header}<div class="source-doc-content ${mode === "workbook" ? "source-workbook-content" : ""}">${content}</div>
+    <footer class="source-actions">
+      <div><button class="icon-button" type="button" data-curriculum-move="previous" aria-label="上一项" title="上一项" ${index === 0 ? "disabled" : ""}><i data-lucide="arrow-left"></i></button><button class="icon-button" type="button" data-curriculum-move="next" aria-label="下一项" title="下一项" ${index === entries.length - 1 ? "disabled" : ""}><i data-lucide="arrow-right"></i></button></div>
+      <div>${isGuide ? "" : `<button class="secondary-button" type="button" id="curriculum-practice"><i data-lucide="dumbbell"></i>配套练习</button><button class="primary-button" type="button" id="curriculum-complete"><i data-lucide="${isComplete ? "rotate-ccw" : "check"}"></i>${isComplete ? "取消完成" : "标记完成"}</button>`}</div>
+    </footer>
+    <p class="source-attribution">正文来自用户提供的《${mode === "handbook" ? "逻辑 · 论证 · 思考 — 系统学习手册" : "逻辑 · 写作 · 思考 — 每日训练习题册"}》HTML，按原章节结构呈现。</p>`;
+
+  $$('[data-curriculum-move]').forEach(button => button.addEventListener("click", () => {
+    const targetIndex = button.dataset.curriculumMove === "previous" ? index - 1 : index + 1;
+    if (entries[targetIndex]) selectCurriculumItem(entries[targetIndex].id);
+  }));
+  $("#curriculum-complete")?.addEventListener("click", () => toggleCurriculumCompletion(item.id));
+  $("#curriculum-practice")?.addEventListener("click", () => startCurriculumPractice(item));
+  $$('[data-source-answer]').forEach(field => field.addEventListener("input", event => {
+    state.sourceWorkbookAnswers[event.target.dataset.sourceAnswer] = event.target.value;
+    clearTimeout(curriculumSaveTimer);
+    curriculumSaveTimer = setTimeout(() => saveState(), 350);
   }));
 }
 
-function selectLesson(id) {
-  state.selectedLesson = id;
+function setCurriculumMode(mode) {
+  if (!curriculum || !["handbook", "workbook"].includes(mode)) return;
+  state.sourceCurriculumMode = mode;
+  curriculumQuery = "";
+  $("#curriculum-search").value = "";
   saveState();
-  renderKnowledge();
-  if (window.innerWidth < 761) $("#lesson-reader").scrollIntoView({ behavior: "smooth", block: "start" });
+  renderCurriculum();
 }
 
-function toggleLessonCompletion(id) {
-  state.completedLessons = state.completedLessons.includes(id) ? state.completedLessons.filter(item => item !== id) : [...state.completedLessons, id];
+function selectCurriculumItem(id) {
+  state.sourceCurriculumSelected = { ...state.sourceCurriculumSelected, [state.sourceCurriculumMode]: id };
   saveState();
-  renderKnowledge();
-  showToast(state.completedLessons.includes(id) ? "本节已完成" : "已恢复为待学习");
+  renderCurriculum();
+  if (window.innerWidth < 761) $("#curriculum-reader").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function startLessonPractice(lessonId) {
-  const lesson = KNOWLEDGE_LESSONS.find(item => item.id === lessonId);
-  const candidates = getQuestions().filter(question => question.subject === "logic" && lesson.practiceTopics.some(topic => question.topic.includes(topic)));
+function toggleCurriculumCompletion(id) {
+  const key = state.sourceCurriculumMode === "workbook" ? "sourceCompletedVolumes" : "sourceCompletedChapters";
+  state[key] = state[key].includes(id) ? state[key].filter(item => item !== id) : [...state[key], id];
+  saveState();
+  renderCurriculum();
+  showToast(state[key].includes(id) ? "本项已完成" : "已恢复为待学习");
+}
+
+function startCurriculumPractice(item) {
+  const topics = state.sourceCurriculumMode === "handbook"
+    ? HANDBOOK_PRACTICE_TOPICS[item.number] || ["习题册"]
+    : [`习题册 · 卷${VOLUME_NUMERALS[item.number - 1]}`];
+  const candidates = getQuestions().filter(question => question.subject === "logic" && topics.some(topic => question.topic.includes(topic)));
   practiceQueue = shuffle(candidates).slice(0, 8);
   if (!practiceQueue.length) {
-    showToast("这节课的配套题正在整理");
+    showToast("这一项暂时没有可抽取的配套题");
     return;
   }
   practiceIndex = 0;
@@ -1049,7 +1116,13 @@ function exportData() {
 
 async function resetData() {
   if (!confirm("确定清空全部练习记录、错题和草稿吗？此操作无法撤销。")) return;
-  state = { ...DEFAULT_STATE, attempts: [], wrongIds: [], masteredIds: [], flaggedIds: [], customQuestions: [], completedTasks: [], completedLessons: [], writingDrafts: {}, openResponses: {}, importedBanks: [], rubric: {} };
+  state = {
+    ...DEFAULT_STATE,
+    attempts: [], wrongIds: [], masteredIds: [], flaggedIds: [], customQuestions: [], completedTasks: [],
+    sourceCompletedChapters: [], sourceCompletedVolumes: [], sourceWorkbookAnswers: {},
+    sourceCurriculumSelected: { ...DEFAULT_STATE.sourceCurriculumSelected },
+    writingDrafts: {}, openResponses: {}, importedBanks: [], rubric: {}
+  };
   await StudyStorage.clear();
   await StudyStorage.save(state);
   $("#data-modal").close(); renderAll(); showToast("本地学习数据已清空");
@@ -1058,7 +1131,7 @@ async function resetData() {
 function updateNavCounts() {
   $("#wrong-count").textContent = state.wrongIds.length;
   $("#library-count").textContent = getQuestions().length;
-  $("#lesson-count").textContent = `${state.completedLessons.length}/${KNOWLEDGE_LESSONS.length}`;
+  $("#curriculum-count").textContent = `${state.sourceCompletedChapters.length + state.sourceCompletedVolumes.length}/19`;
 }
 
 function questionTypeLabel(question) {

@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import vm from "node:vm";
 
 const root = new URL("../", import.meta.url);
@@ -7,8 +8,7 @@ const workbookQuestions = vm.runInNewContext(`${workbookSource}\nWORKBOOK_QUESTI
 const appSource = await readFile(new URL("app.js", root), "utf8");
 const coreBlock = appSource.slice(appSource.indexOf("const QUESTIONS"), appSource.indexOf("const WRITING_PROMPTS"));
 const coreQuestions = vm.runInNewContext(`${coreBlock}\nQUESTIONS`);
-const knowledgeSource = await readFile(new URL("knowledge-base.js", root), "utf8");
-const knowledgeLessons = vm.runInNewContext(`${knowledgeSource}\nKNOWLEDGE_LESSONS`);
+const curriculum = JSON.parse(await readFile(new URL("data/curriculum/curriculum-source.json", root), "utf8"));
 const allQuestions = [...coreQuestions, ...workbookQuestions];
 const exampleBank = JSON.parse(await readFile(new URL("data/question-banks/example-bank.json", root), "utf8"));
 const generatedBank = JSON.parse(await readFile(new URL("data/question-banks/open-practice-bank.json", root), "utf8"));
@@ -82,40 +82,33 @@ for (const question of coreQuestions.filter(question => question.subject === "ma
 for (const question of generatedBank.questions) {
   if (!question.source || !question.license) errors.push(`Generated question needs source and license metadata: ${question.id}`);
 }
-if (!Array.isArray(knowledgeLessons) || knowledgeLessons.length !== 17) {
-  errors.push(`Expected 17 knowledge lessons, found ${knowledgeLessons?.length ?? 0}`);
+const expectedHandbookTitles = [
+  "导论：清晰思考的地图", "逻辑基础：论证的解剖学", "谬误大全：论证出错的全部方式", "论证分析与建构",
+  "因果与统计思维", "概率与不确定性思维", "认知偏误大全", "写作即思考", "思考的深度与心智模型",
+  "提问、对话与有效表达", "思维工具箱：速查清单", "术语表（中英对照）", "进阶书单与学习路径"
+];
+const expectedWorkbookTitles = ["卷一 · 语言与定义", "卷二 · 因果与相关", "卷三 · 论证结构", "卷四 · 类比与归纳", "卷五 · 价值权衡与两难", "卷六 · 修辞与说服"];
+const digest = content => createHash("sha256").update(content).digest("hex");
+if (curriculum.schemaVersion !== 1 || curriculum.handbook?.chapters?.length !== 13 || curriculum.workbook?.volumes?.length !== 6) {
+  errors.push("Curriculum must contain 13 handbook chapters and 6 workbook volumes");
 } else {
-  const lessonIds = new Set();
-  const lessonOrders = new Set();
-  for (const lesson of knowledgeLessons) {
-    if (!lesson.id || lessonIds.has(lesson.id)) errors.push(`Duplicate or missing lesson id: ${lesson.id}`);
-    lessonIds.add(lesson.id);
-    if (!Number.isInteger(lesson.order) || lessonOrders.has(lesson.order)) errors.push(`Duplicate or invalid lesson order: ${lesson.order}`);
-    lessonOrders.add(lesson.order);
-    for (const field of ["chapter", "title", "subtitle", "source", "summary", "reflection"]) {
-      if (typeof lesson[field] !== "string" || !lesson[field].trim()) errors.push(`Lesson ${lesson.id} needs ${field}`);
-    }
-    if (!Number.isFinite(lesson.duration) || lesson.duration <= 0) errors.push(`Lesson ${lesson.id} needs a positive duration`);
-    if (!Array.isArray(lesson.objectives) || lesson.objectives.length < 3 || lesson.objectives.some(item => typeof item !== "string" || !item.trim())) {
-      errors.push(`Lesson ${lesson.id} needs at least three objectives`);
-    }
-    if (!Array.isArray(lesson.concepts) || lesson.concepts.length < 3 || lesson.concepts.some(item => !item.term || !item.english || !item.definition)) {
-      errors.push(`Lesson ${lesson.id} needs at least three complete concepts`);
-    }
-    if (!lesson.method?.title || !Array.isArray(lesson.method.steps) || lesson.method.steps.length < 3 || lesson.method.steps.some(step => !step.title || !step.body)) {
-      errors.push(`Lesson ${lesson.id} needs a complete method`);
-    }
-    if (!lesson.example?.title || !lesson.example?.prompt || !lesson.example?.analysis) errors.push(`Lesson ${lesson.id} needs a worked example`);
-    if (!Array.isArray(lesson.practiceTopics) || !lesson.practiceTopics.length || lesson.practiceTopics.some(topic => typeof topic !== "string" || !topic.trim())) {
-      errors.push(`Lesson ${lesson.id} needs practice topics`);
-    } else {
-      const matchingPractice = allQuestions.filter(question => question.subject === "logic" && lesson.practiceTopics.some(topic => question.topic.includes(topic)));
-      if (matchingPractice.length < 4) errors.push(`Lesson ${lesson.id} needs at least four matching logic questions`);
+  const handbookTitles = curriculum.handbook.chapters.map(chapter => chapter.title);
+  const workbookTitles = curriculum.workbook.volumes.map(volume => volume.title);
+  if (JSON.stringify(handbookTitles) !== JSON.stringify(expectedHandbookTitles)) errors.push("Handbook chapter titles or order do not match the source HTML");
+  if (JSON.stringify(workbookTitles) !== JSON.stringify(expectedWorkbookTitles)) errors.push("Workbook volume titles or order do not match the source HTML");
+  if (!curriculum.workbook.intro?.content.includes("通用自评量规")) errors.push("Workbook usage guide is missing its self-review rubric");
+  for (const chapter of curriculum.handbook.chapters) {
+    if (!chapter.id || !chapter.subtitle || chapter.content.length < 1500) errors.push(`Handbook chapter is incomplete: ${chapter.id}`);
+  }
+  for (const volume of curriculum.workbook.volumes) {
+    for (const heading of ["第一部分　填空 · 精炼", "第二部分　阅读理解", "第三部分　简答 · 深度思考与写作", "参考与自评要点"]) {
+      if (!volume.content.includes(heading)) errors.push(`Workbook ${volume.id} is missing section: ${heading}`);
     }
   }
-  for (let order = 1; order <= knowledgeLessons.length; order += 1) {
-    if (!lessonOrders.has(order)) errors.push(`Knowledge lesson order is missing: ${order}`);
-  }
+  const handbookDigest = digest(curriculum.handbook.chapters.map(chapter => chapter.content).join("\n\0\n"));
+  const workbookDigest = digest([curriculum.workbook.intro, ...curriculum.workbook.volumes].map(document => document.content).join("\n\0\n"));
+  if (handbookDigest !== "ec698573d774779de54cd401f2ec4f3ea0491b6bbb181750c9f24929d0eeef6a") errors.push("Handbook content differs from the supplied HTML snapshot");
+  if (workbookDigest !== "ce177b6167619d4319daa0120ad3b3e92467e0515f8484b2446b79b8d1c013c8") errors.push("Workbook content differs from the supplied HTML snapshot");
 }
 if (exampleBank.schemaVersion !== 1 || !exampleBank.bank?.id || !Array.isArray(exampleBank.questions)) {
   errors.push("Example question bank does not match schema version 1");
