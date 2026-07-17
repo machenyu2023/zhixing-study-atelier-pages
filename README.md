@@ -18,12 +18,9 @@
 
 在线地址：[https://machenyu2023.github.io/zhixing-study-atelier-pages/](https://machenyu2023.github.io/zhixing-study-atelier-pages/)
 
-当前 GitHub 套餐不支持私有仓库直接开启 Pages，因此使用双仓库部署：
+项目的源码、题库、文档、AI 阅卷后端和部署配置统一保存在公开仓库 [`zhixing-study-atelier-pages`](https://github.com/machenyu2023/zhixing-study-atelier-pages)。
 
-- `zhixing-study-atelier`：私有源码仓库。
-- `zhixing-study-atelier-pages`：公开部署仓库，只包含 `dist` 构建结果。
-
-推送到私有仓库 `main` 分支后，[Publish Website](.github/workflows/publish-site.yml) 会校验并构建，再通过仅有部署仓库写权限的 Deploy Key 推送构建结果。部署仓库自己的 Action 随后发布 GitHub Pages。
+推送到 `main` 分支后，[Deploy GitHub Pages](.github/workflows/deploy-pages.yml) 会自动校验项目、构建 `dist`，并通过 GitHub Actions 发布到 Pages。仓库不保存 API Key、个人答题记录或其他私密学习数据。
 
 ## 本地运行
 
