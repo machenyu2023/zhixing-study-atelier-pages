@@ -12,5 +12,7 @@ for (const file of files) {
   await cp(new URL(file, root), new URL(file, dist));
 }
 await cp(new URL("data/", root), new URL("data/", dist), { recursive: true });
+await mkdir(new URL(".github/workflows/", dist), { recursive: true });
+await cp(new URL("deployment/deploy-pages.yml", root), new URL(".github/workflows/deploy-pages.yml", dist));
 await writeFile(join(fileURLToPath(dist), ".nojekyll"), "");
 console.log(`Built ${files.length} application files and question-bank resources.`);

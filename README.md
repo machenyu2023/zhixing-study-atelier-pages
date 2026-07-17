@@ -1,6 +1,6 @@
 # 知行 · 个人学习台
 
-[![Deploy GitHub Pages](https://github.com/machenyu2023/zhixing-study-atelier/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/machenyu2023/zhixing-study-atelier/actions/workflows/deploy-pages.yml)
+[![Deploy GitHub Pages](https://github.com/machenyu2023/zhixing-study-atelier-pages/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/machenyu2023/zhixing-study-atelier-pages/actions/workflows/deploy-pages.yml)
 
 面向个人长期学习的刷题、思辨、写作与复盘网站。目前覆盖雅思、逻辑、写作和数学，内置 55 道题，其中包括一套 14 天逻辑写作训练。
 
@@ -16,9 +16,14 @@
 
 ## 在线部署
 
-推送到 `main` 分支后，[GitHub Actions](.github/workflows/deploy-pages.yml) 会校验题库、构建 `dist` 并发布到 GitHub Pages。
+在线地址：[https://machenyu2023.github.io/zhixing-study-atelier-pages/](https://machenyu2023.github.io/zhixing-study-atelier-pages/)
 
-仓库保持私有。Pages 网站是否公开、以及私有仓库是否支持 Pages，取决于 GitHub 账号套餐和 Pages 访问控制设置。
+当前 GitHub 套餐不支持私有仓库直接开启 Pages，因此使用双仓库部署：
+
+- `zhixing-study-atelier`：私有源码仓库。
+- `zhixing-study-atelier-pages`：公开部署仓库，只包含 `dist` 构建结果。
+
+推送到私有仓库 `main` 分支后，[Publish Website](.github/workflows/publish-site.yml) 会校验并构建，再通过仅有部署仓库写权限的 Deploy Key 推送构建结果。部署仓库自己的 Action 随后发布 GitHub Pages。
 
 ## 本地运行
 
