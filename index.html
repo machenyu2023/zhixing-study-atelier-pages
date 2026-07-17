@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="知行，一款为个人长期学习设计的刷题、复盘与写作工作台。" />
+  <title>知行 · 个人学习台</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#today" data-route="today" aria-label="知行首页">
+        <span class="brand-mark">知</span>
+        <span class="brand-copy"><strong>知行</strong><small>STUDY ATELIER</small></span>
+      </a>
+
+      <nav class="primary-nav" aria-label="主要导航">
+        <button class="nav-item active" data-view="today" type="button"><i data-lucide="layout-dashboard"></i><span>今日</span></button>
+        <button class="nav-item" data-view="library" type="button"><i data-lucide="library-big"></i><span>题库</span><span class="nav-count" id="library-count">55</span></button>
+        <button class="nav-item" data-view="practice" type="button"><i data-lucide="timer-reset"></i><span>练习</span></button>
+        <button class="nav-item" data-view="review" type="button"><i data-lucide="rotate-ccw"></i><span>错题本</span><span class="nav-count" id="wrong-count">0</span></button>
+        <button class="nav-item" data-view="writing" type="button"><i data-lucide="pen-line"></i><span>写作室</span></button>
+        <button class="nav-item" data-view="analytics" type="button"><i data-lucide="chart-no-axes-combined"></i><span>学习数据</span></button>
+      </nav>
+
+      <div class="subject-key" aria-label="学科颜色图例">
+        <p>我的学科</p>
+        <span><b class="dot ielts"></b>雅思</span>
+        <span><b class="dot logic"></b>逻辑</span>
+        <span><b class="dot writing"></b>写作</span>
+        <span><b class="dot math"></b>数学</span>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="profile-button" id="open-data-menu" type="button" title="数据管理">
+          <span class="avatar">我</span>
+          <span><strong>个人空间</strong><small>数据仅保存在本机</small></span>
+          <i data-lucide="settings-2"></i>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="current-date"></p>
+          <h1 id="view-title">今日学习</h1>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-button" id="quick-add" type="button" title="添加题目" aria-label="添加题目"><i data-lucide="plus"></i></button>
+          <button class="primary-button compact" id="header-start" type="button"><i data-lucide="play"></i>开始练习</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-today" aria-labelledby="view-title">
+        <div class="focus-band">
+          <div class="focus-copy">
+            <span class="subject-label ielts-label">IELTS · READING</span>
+            <h2>把今天最重要的<br />25 分钟留给阅读。</h2>
+            <p>先完成 5 道句意与推断题，再整理答错的依据。一次只做一件事。</p>
+            <div class="focus-actions">
+              <button class="inverse-button" type="button" data-start-subject="ielts"><i data-lucide="play"></i>继续今日训练</button>
+              <span><i data-lucide="clock-3"></i>预计 25 分钟</span>
+            </div>
+          </div>
+          <div class="focus-visual" aria-label="今日进度">
+            <svg class="progress-ring" viewBox="0 0 160 160" role="img" aria-label="今日学习进度">
+              <circle class="ring-track" cx="80" cy="80" r="62"></circle>
+              <circle class="ring-value" id="daily-ring" cx="80" cy="80" r="62"></circle>
+            </svg>
+            <div class="ring-label"><strong id="daily-percent">0%</strong><span>今日计划</span></div>
+            <div class="visual-note"><span>每日目标</span><strong>40<small> 分钟</small></strong></div>
+          </div>
+        </div>
+
+        <div class="metrics-strip" id="metrics-strip"></div>
+
+        <div class="dashboard-grid">
+          <section class="panel daily-plan">
+            <div class="section-heading">
+              <div><span class="section-kicker">DAILY PLAN</span><h2>今日清单</h2></div>
+              <span class="section-meta" id="plan-progress">0 / 4 完成</span>
+            </div>
+            <div id="daily-task-list" class="task-list"></div>
+          </section>
+
+          <section class="panel weekly-panel">
+            <div class="section-heading">
+              <div><span class="section-kicker">THIS WEEK</span><h2>学习节奏</h2></div>
+              <span class="section-meta" id="weekly-total">0 次练习</span>
+            </div>
+            <div class="week-chart" id="week-chart" aria-label="最近七天练习次数"></div>
+            <p class="chart-caption"><span><b class="legend-block"></b>完成题目</span><span id="accuracy-caption">正确率 —</span></p>
+          </section>
+        </div>
+
+        <section class="panel subjects-panel">
+          <div class="section-heading">
+            <div><span class="section-kicker">SUBJECTS</span><h2>四条学习线</h2></div>
+            <button class="text-button" type="button" data-go-view="analytics">查看全部数据<i data-lucide="arrow-right"></i></button>
+          </div>
+          <div class="subject-progress-grid" id="subject-progress-grid"></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-library" aria-labelledby="view-title">
+        <div class="library-toolbar">
+          <div class="search-box"><i data-lucide="search"></i><input id="question-search" type="search" placeholder="搜索题干、标签或知识点" aria-label="搜索题库" /></div>
+          <div class="library-toolbar-actions">
+            <input class="hidden" id="bank-import-input" type="file" accept="application/json,.json" />
+            <button class="secondary-button" id="bank-import" type="button"><i data-lucide="upload"></i>导入题库</button>
+            <button class="secondary-button" id="library-add" type="button"><i data-lucide="plus"></i>录入题目</button>
+          </div>
+        </div>
+        <div class="filter-row" id="library-filters">
+          <button class="filter-chip active" type="button" data-filter="all">全部</button>
+          <button class="filter-chip" type="button" data-filter="ielts">雅思</button>
+          <button class="filter-chip" type="button" data-filter="logic">逻辑</button>
+          <button class="filter-chip" type="button" data-filter="writing">写作</button>
+          <button class="filter-chip" type="button" data-filter="math">数学</button>
+          <button class="filter-chip" type="button" data-filter="open">开放题</button>
+          <button class="filter-chip" type="button" data-filter="wrong">仅错题</button>
+        </div>
+        <div class="list-header"><span id="question-result-count">全部题目</span><span>状态</span><span>操作</span></div>
+        <div class="question-list" id="question-list"></div>
+      </section>
+
+      <section class="view" id="view-practice" aria-labelledby="view-title">
+        <div class="practice-setup" id="practice-setup">
+          <div class="setup-intro">
+            <span class="section-kicker">FOCUS SESSION</span>
+            <h2>选择今天要攻克的方向</h2>
+            <p>系统会从对应题库中抽取题目。选择题即时查看解析；开放题保留原始作答，并用自评清单完成复盘。</p>
+          </div>
+          <div class="practice-subjects">
+            <button class="practice-subject" type="button" data-start-subject="ielts"><span class="subject-icon ielts-bg"><i data-lucide="languages"></i></span><span><b>雅思</b><small>词汇、阅读与推断</small></span><i data-lucide="arrow-up-right"></i></button>
+            <button class="practice-subject" type="button" data-start-subject="logic"><span class="subject-icon logic-bg"><i data-lucide="git-branch"></i></span><span><b>逻辑</b><small>形式逻辑与论证</small></span><i data-lucide="arrow-up-right"></i></button>
+            <button class="practice-subject" type="button" data-start-subject="math"><span class="subject-icon math-bg"><i data-lucide="sigma"></i></span><span><b>数学</b><small>代数、几何与概率</small></span><i data-lucide="arrow-up-right"></i></button>
+            <button class="practice-subject" type="button" data-start-subject="all"><span class="subject-icon mixed-bg"><i data-lucide="shuffle"></i></span><span><b>混合练习</b><small>跨学科随机抽题</small></span><i data-lucide="arrow-up-right"></i></button>
+          </div>
+        </div>
+        <div class="practice-stage hidden" id="practice-stage"></div>
+      </section>
+
+      <section class="view" id="view-review" aria-labelledby="view-title">
+        <div class="review-summary" id="review-summary"></div>
+        <div class="review-list" id="review-list"></div>
+      </section>
+
+      <section class="view" id="view-writing" aria-labelledby="view-title">
+        <div class="writing-layout">
+          <aside class="prompt-rail">
+            <span class="section-kicker">PROMPTS</span>
+            <h2>写作题目</h2>
+            <div id="prompt-list" class="prompt-list"></div>
+          </aside>
+          <div class="writing-desk">
+            <div class="writing-prompt" id="writing-prompt"></div>
+            <div class="editor-toolbar">
+              <span id="draft-status"><i data-lucide="cloud"></i>尚未保存</span>
+              <div><span id="word-count">0 词</span><button class="secondary-button compact" id="save-draft" type="button"><i data-lucide="save"></i>保存草稿</button></div>
+            </div>
+            <textarea id="writing-editor" aria-label="写作编辑器" spellcheck="true" placeholder="从第一句话开始……"></textarea>
+            <div class="writing-rubric">
+              <div class="section-heading"><div><span class="section-kicker">SELF CHECK</span><h2>写完后，自评一次</h2></div></div>
+              <div id="rubric-list" class="rubric-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-analytics" aria-labelledby="view-title">
+        <div class="analytics-overview" id="analytics-overview"></div>
+        <div class="analytics-grid">
+          <section class="panel performance-panel">
+            <div class="section-heading"><div><span class="section-kicker">ACCURACY</span><h2>学科表现</h2></div></div>
+            <div id="performance-list" class="performance-list"></div>
+          </section>
+          <section class="panel activity-panel">
+            <div class="section-heading"><div><span class="section-kicker">ACTIVITY</span><h2>最近练习</h2></div></div>
+            <div id="activity-list" class="activity-list"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="modal" id="question-modal">
+    <form method="dialog" id="question-form">
+      <div class="modal-header"><div><span class="section-kicker">NEW QUESTION</span><h2>录入一道题</h2></div><button class="icon-button" value="cancel" type="submit" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button></div>
+      <div class="form-grid">
+        <label>学科<select name="subject" required><option value="ielts">雅思</option><option value="logic">逻辑</option><option value="math">数学</option><option value="writing">写作</option></select></label>
+        <label>知识点<input name="topic" required placeholder="例如：条件推理" /></label>
+      </div>
+      <label>题干<textarea name="question" required rows="3" placeholder="输入题目内容"></textarea></label>
+      <div class="form-grid options-grid">
+        <label>选项 A<input name="optionA" required /></label><label>选项 B<input name="optionB" required /></label>
+        <label>选项 C<input name="optionC" required /></label><label>选项 D<input name="optionD" required /></label>
+      </div>
+      <label>正确答案<select name="answer" required><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
+      <label>解析<textarea name="explanation" required rows="3" placeholder="说明为什么，以及关键判断依据"></textarea></label>
+      <div class="modal-actions"><button class="secondary-button" value="cancel" type="submit">取消</button><button class="primary-button" value="default" type="submit"><i data-lucide="plus"></i>加入题库</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="modal data-modal" id="data-modal">
+    <div class="modal-header"><div><span class="section-kicker">LOCAL DATA</span><h2>数据管理</h2></div><button class="icon-button" id="close-data-modal" type="button" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button></div>
+    <p>你的练习记录、错题与草稿保存在当前浏览器的 IndexedDB 中。可以导出备份，再在这台设备上长期使用。</p>
+    <div class="data-actions">
+      <button class="data-action" id="export-data" type="button"><span><i data-lucide="download"></i></span><b>导出学习数据</b><small>下载 JSON 备份文件</small></button>
+      <button class="data-action danger" id="reset-data" type="button"><span><i data-lucide="trash-2"></i></span><b>清空全部数据</b><small>此操作无法撤销</small></button>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script src="config.js"></script>
+  <script src="storage.js"></script>
+  <script src="workbook-bank.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

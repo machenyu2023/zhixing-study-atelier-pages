@@ -1,0 +1,7 @@
+.env
+dist/
+server.log
+server.err
+*.pid
+.DS_Store
+Thumbs.db

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "bank": {
+    "id": "personal-demo",
+    "title": "个人扩展示例题库",
+    "version": "1.0.0",
+    "description": "复制此文件并替换题目，即可从网站题库页批量导入。"
+  },
+  "questions": [
+    {
+      "id": "demo-choice-1",
+      "type": "choice",
+      "subject": "logic",
+      "topic": "论证识别",
+      "difficulty": "基础",
+      "taskType": "选择题",
+      "question": "哪一项最直接构成对因果结论的削弱？",
+      "options": ["增加一个相似案例", "提出能够同时解释原因与结果的第三变量", "重复原结论", "质疑表达语气"],
+      "answer": 1,
+      "explanation": "第三变量为相关现象提供了替代解释，因此能直接削弱因果推断。"
+    },
+    {
+      "id": "demo-open-1",
+      "type": "open",
+      "subject": "writing",
+      "topic": "中心论点",
+      "difficulty": "进阶",
+      "taskType": "微写作",
+      "question": "用 200-300 字论证：效率不应成为评价学习的唯一标准。",
+      "checkpoints": ["中心论点具体且可争辩", "包含一个具体例子", "回应一个可能的反方", "给出适用边界"],
+      "wordTarget": 250
+    }
+  ]
+}
