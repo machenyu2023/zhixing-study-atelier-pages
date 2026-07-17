@@ -17,7 +17,8 @@
 
       <nav class="primary-nav" aria-label="主要导航">
         <button class="nav-item active" data-view="today" type="button"><i data-lucide="layout-dashboard"></i><span>今日</span></button>
-        <button class="nav-item" data-view="library" type="button"><i data-lucide="library-big"></i><span>题库</span><span class="nav-count" id="library-count">1020</span></button>
+        <button class="nav-item" data-view="learn" type="button"><i data-lucide="book-open-check"></i><span>知识课</span><span class="nav-count" id="lesson-count">0/14</span></button>
+        <button class="nav-item" data-view="library" type="button"><i data-lucide="library-big"></i><span>题库</span><span class="nav-count" id="library-count">1280</span></button>
         <button class="nav-item" data-view="practice" type="button"><i data-lucide="timer-reset"></i><span>练习</span></button>
         <button class="nav-item" data-view="review" type="button"><i data-lucide="rotate-ccw"></i><span>错题本</span><span class="nav-count" id="wrong-count">0</span></button>
         <button class="nav-item" data-view="writing" type="button"><i data-lucide="pen-line"></i><span>写作室</span></button>
@@ -102,6 +103,39 @@
           </div>
           <div class="subject-progress-grid" id="subject-progress-grid"></div>
         </section>
+      </section>
+
+      <section class="view" id="view-learn" aria-labelledby="view-title">
+        <section class="learning-overview">
+          <div class="learning-overview-copy">
+            <span class="section-kicker">KNOWLEDGE PATH</span>
+            <h2>先理解一件工具，再用一道题把它变成能力。</h2>
+            <p>课程由两份学习材料重新整理为 14 节短课，串起概念、论证、因果、概率、偏误、写作与对话。</p>
+          </div>
+          <div class="learning-progress" aria-label="知识课进度">
+            <span>课程进度</span>
+            <strong><b id="knowledge-completed">0</b><small> / 14 节</small></strong>
+            <div class="progress-track"><div class="progress-fill" id="knowledge-progress-bar"></div></div>
+            <p id="knowledge-next-label">从清晰思考的地图开始</p>
+          </div>
+        </section>
+
+        <div class="learning-cycle" aria-label="学习闭环">
+          <div><span>01</span><b>理解工具</b><small>知道它解决什么问题</small></div>
+          <div><span>02</span><b>独立作答</b><small>关闭资料先产出判断</small></div>
+          <div><span>03</span><b>核对复盘</b><small>检查证据、结构与边界</small></div>
+          <div><span>04</span><b>重写一题</b><small>把反馈变成下次动作</small></div>
+        </div>
+
+        <div class="learning-toolbar">
+          <div class="search-box"><i data-lucide="search"></i><input id="lesson-search" type="search" placeholder="搜索概念、方法或章节" aria-label="搜索知识课" /></div>
+          <span id="lesson-filter-meta">14 节课程</span>
+        </div>
+
+        <div class="learning-layout">
+          <aside class="lesson-rail" aria-label="知识课目录"><div id="lesson-list"></div></aside>
+          <article class="lesson-reader" id="lesson-reader" aria-live="polite"></article>
+        </div>
       </section>
 
       <section class="view" id="view-library" aria-labelledby="view-title">
@@ -227,6 +261,7 @@
     <div class="modal-header"><div><span class="section-kicker">COPYRIGHT & SOURCES</span><h2>版权与题目来源</h2></div><button class="icon-button" id="close-copyright-modal" type="button" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button></div>
     <div class="legal-copy">
       <p><strong>项目内容。</strong>除题目另有来源标注外，界面文案、训练题与程序生成题均为本项目原创，仅供个人学习使用。未经许可，不应将第三方付费题库或受版权保护的考试真题导入后公开传播。</p>
+      <p><strong>学习材料。</strong>知识课的章节组织参考用户提供的《逻辑 · 写作 · 思考 — 每日训练习题册》和《逻辑 · 论证 · 思考 — 系统学习手册》。站内课程与新增题目均经过重新提炼、改写和原创情境设计；原 PDF 不纳入仓库，也不随网站分发。</p>
       <p><strong>生成题库。</strong>仓库内的“开放练习题库”由确定性脚本生成，题干、参数与解析可复现；每道题保留来源与许可字段，便于后续审计。</p>
       <p><strong>第三方内容。</strong>接入公开资源时必须保留作者、来源链接、许可名称和修改说明。许可不明的内容不得进入内置题库。</p>
       <p><strong>个人数据。</strong>你录入的题目、作答与草稿默认只存于当前浏览器，权利归原内容权利人所有，不随 Pages 部署上传。</p>
@@ -241,6 +276,7 @@
   <script src="config.js"></script>
   <script src="storage.js"></script>
   <script src="workbook-bank.js"></script>
+  <script src="knowledge-base.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

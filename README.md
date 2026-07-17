@@ -2,11 +2,12 @@
 
 [![Deploy GitHub Pages](https://github.com/machenyu2023/zhixing-study-atelier-pages/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/machenyu2023/zhixing-study-atelier-pages/actions/workflows/deploy-pages.yml)
 
-面向个人长期学习的刷题、思辨、写作与复盘网站。目前覆盖雅思、逻辑、写作和数学，内置 1020 道题，其中数学重点为优化、矩阵论、随机过程和高等概率论。
+面向个人长期学习的知识学习、刷题、思辨、写作与复盘网站。目前覆盖雅思、逻辑、写作和数学，内置 1280 道题和 14 节逻辑思维知识课。其中逻辑题共 452 道，数学重点为优化、矩阵论、随机过程和高等概率论。
 
 ## 核心能力
 
-- 228 道可即时判分的雅思、逻辑与数学选择题。
+- 14 节知识课，覆盖定义、论证、谬误、因果、概率、偏误、写作、心智模型与对话，并支持课程进度和配套练习。
+- 488 道可即时判分的雅思、逻辑与数学选择题。
 - 705 道支持多答案和数值容差的填空题。
 - 87 道材料阅读、论证简答和写作开放题。
 - 选择题解析、错题自动收集、重做和掌握归档。
@@ -40,7 +41,7 @@ npm test
 npm run build
 ```
 
-重新生成 965 道参数化扩展题：
+重新生成 1225 道参数化扩展题：
 
 ```powershell
 npm run generate:bank

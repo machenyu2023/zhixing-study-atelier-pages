@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 const output = new URL("../data/question-banks/open-practice-bank.json", import.meta.url);
 const questions = [];
-const SOURCE = "知行原创参数化题库 v3";
+const SOURCE = "知行原创参数化题库 v4";
 const RIGHTS = "Project Original - personal study use";
 
 let seed = 20260717;
@@ -280,6 +280,250 @@ syllogismNouns.forEach(([a, b, c], index) => {
   addChoice(`logic-syllogism-${index + 1}-none`, "logic", "三段论", `没有${a}是${b}；有些${c}是${a}。哪项必然成立？`, [`所有${c}都不是${b}`, `有些${c}不是${b}`, `有些${b}是${c}`, `所有${a}都是${c}`], 1, `存在一部分${c}属于${a}，而${a}与${b}互斥，因此这些${c}不是${b}。`);
 });
 
+// Manual-based logic curriculum: original scenarios derived from the user's handbook structure.
+const manualLogicStart = questions.length;
+
+const argumentCases = [
+  { text: "内部调查中 78% 的受访员工支持远程办公，因此公司应该永久取消办公室。", conclusion: "公司应该永久取消办公室", assumption: "受访者意见足以代表远程办公的全部成本与收益" },
+  { text: "AI 能显著加快初稿生成，所以学校应允许学生用 AI 完成所有写作任务。", conclusion: "学校应允许 AI 完成所有写作任务", assumption: "提高产出速度不会削弱写作训练的学习目标" },
+  { text: "邻市增设自行车道后事故下降，因此本市也应按同样方案扩建。", conclusion: "本市应按邻市方案扩建自行车道", assumption: "两座城市在影响方案效果的关键条件上足够相似" },
+  { text: "四天工作制试点期间产出没有下降，所以公司应立即全面推行。", conclusion: "公司应立即全面推行四天工作制", assumption: "试点结果可以外推到全部团队和长期运行" },
+  { text: "小班学生平均分更高，所以缩小班级一定能提高所有学校的成绩。", conclusion: "缩小班级一定能提高所有学校成绩", assumption: "分数差异主要由班级规模造成而非生源等因素" },
+  { text: "提价后客户流失增加，所以只要恢复原价客户就会回来。", conclusion: "恢复原价会让流失客户回来", assumption: "流失主要由价格而非产品或竞争变化造成" },
+  { text: "冠军销售使用这套话术，所以全员照着说就能提升业绩。", conclusion: "全员照用话术就能提升业绩", assumption: "冠军业绩主要来自话术且效果可复制给其他人" },
+  { text: "参加自愿培训的员工晋升更快，因此强制培训会提高所有人的晋升率。", conclusion: "强制培训会提高所有人的晋升率", assumption: "自愿参加者与未参加者的差异不会同时影响晋升" },
+  { text: "树木较多的街区夏季温度更低，所以多种树必然解决城市热岛。", conclusion: "多种树必然解决城市热岛", assumption: "树木数量是温差的主要原因且效果足以覆盖其他因素" },
+  { text: "发布会议规范后会议时长下降，所以规范已经提高了组织效率。", conclusion: "会议规范已经提高组织效率", assumption: "会议变短代表有效产出提高且不是工作量变化所致" }
+];
+argumentCases.forEach((item, index) => {
+  const conclusionOptions = [item.conclusion, ...[1, 3, 6].map(offset => argumentCases[(index + offset) % argumentCases.length].conclusion)];
+  const assumptionOptions = [item.assumption, ...[2, 4, 7].map(offset => argumentCases[(index + offset) % argumentCases.length].assumption)];
+  addChoice(`logic-argument-conclusion-${index + 1}`, "logic", "论证结构 · 结论与前提", `${item.text} 这段论证的主结论是什么？`, conclusionOptions, 0, `结论是作者最终想让读者接受或采取的判断，即“${item.conclusion}”；其余内容用于支持或补充。`);
+  addChoice(`logic-argument-assumption-${index + 1}`, "logic", "Toulmin 模型 · 理据与隐含假设", `${item.text} 要让这段推理成立，最关键的隐含假设是什么？`, assumptionOptions, 0, `理由与结论之间依赖的桥是：“${item.assumption}”。在 Toulmin 模型中，这类桥接规则属于理据；把它写出来后，才能进一步检查是否有证据。`);
+});
+
+const reasoningTypes = [
+  ["所有通过安全审计的系统都有完整日志；这个系统通过了安全审计；所以它有完整日志。", "演绎", "由一般规则和个案推出必然结论。"],
+  ["连续抽查的 200 个零件均合格，因此推测这一批零件大多合格。", "归纳", "由有限样本推测总体，结论是或然的。"],
+  ["服务器同时出现延迟与磁盘告警，工程师推测最可能是 I/O 饱和。", "溯因", "从现象反推最佳解释，但不排除其他原因。"],
+  ["若模型过拟合，则训练误差低而验证误差高；现在观察到这一模式，因此怀疑过拟合。", "溯因", "结果符合某原因的预测，只能支持最佳解释而非演绎确认。"],
+  ["过去十次节假日流量都上涨，因此预计下次节假日也会上涨。", "归纳", "从重复观察预测下一次，仍保留失败可能。"],
+  ["所有合同必须经法务批准；这是一份合同；所以它必须经法务批准。", "演绎", "前提若真，结论无法为假。"],
+  ["病人发热、咳嗽且影像异常，医生判断肺部感染是当前最佳解释。", "溯因", "诊断是从症状集合寻找最能解释它们的原因。"],
+  ["随机抽取的用户中多数偏好简洁界面，因此推测总体用户也倾向简洁界面。", "归纳", "样本到总体是概率性推广。"],
+  ["没有完成认证的人不能上线操作；小周未完成认证；所以小周不能上线操作。", "演绎", "规则直接适用于个案。"],
+  ["最近五个高分项目都有每周复盘，因此猜测复盘可能帮助项目表现。", "归纳", "共现案例提供线索，但尚未排除选择与混杂。"]
+];
+reasoningTypes.forEach(([text, answer, explanation], index) => addChoice(`logic-reasoning-type-${index + 1}`, "logic", "论证结构 · 推理类型", `${text} 这主要属于哪种推理？`, [answer, ...["演绎", "归纳", "溯因"].filter(item => item !== answer), "没有任何推理"], 0, explanation));
+
+const validityItems = [
+  ["一个演绎论证结构有效且前提全部为真，它被称为什么？", ["可靠论证", "强归纳", "溯因解释", "循环论证"], 0, "可靠性等于有效结构加真实前提。"],
+  ["一个论证结构有效，但其中一个前提为假，最准确的评价是什么？", ["有效但不可靠", "无效但可靠", "既有效又可靠", "归纳很强"], 0, "有效性只看结构；假前提使它不可靠。"],
+  ["“因为、鉴于、既然”通常提示后面是什么？", ["前提", "结论", "反例", "定义"], 0, "这些词通常引出用于支持的理由。"],
+  ["“所以、因此、由此可见”通常提示后面是什么？", ["结论", "前提", "限定词", "背景"], 0, "这些词通常引出作者要推出的判断。"],
+  ["反驳演绎论证最直接的两条路线是什么？", ["指出结构无效或前提为假", "攻击作者或强调情绪", "只找一个相反观点", "证明结论不受欢迎"], 0, "演绎论证的评价分为结构和前提两关。"],
+  ["下列哪句话是命题？", ["这份报告共有 20 页", "请把报告发给我", "这报告真长啊", "几点开会"], 0, "命题必须能够明确判断真假。"],
+  ["归纳结论最合理的措辞是哪一种？", ["在当前样本和条件下很可能成立", "逻辑上必然且没有例外", "只要有一个案例就证明", "无需说明样本来源"], 0, "归纳提供程度不同的支持，不提供演绎必然。"],
+  ["溯因推理得到的结论应如何理解？", ["当前证据下的最佳解释", "唯一可能的原因", "形式逻辑上的必然结论", "与证据无关的猜测"], 0, "最佳解释仍需与替代解释竞争。"],
+  ["前提都真是否足以保证演绎结论为真？", ["不够，还要结构有效", "足够，结构无关", "只要作者可信就够", "只要结论受欢迎就够"], 0, "真前提通过无效结构仍可能推出不成立的结论。"],
+  ["分析一段复杂表达时，最先做哪一步最有助于暴露漏洞？", ["还原为前提和结论", "先判断作者动机", "先找华丽措辞", "先同意或反对结论"], 0, "标准形式能把内容与推出关系分开。"]
+];
+validityItems.forEach(([question, options, correct, explanation], index) => addChoice(`logic-validity-${index + 1}`, "logic", "论证结构 · 有效与可靠", question, options, correct, explanation));
+
+const fallacies = [
+  { name: "人身攻击", category: "相关性", definition: "攻击说话者的人格或处境，而不回应其论点。", scenarios: ["他连自己的项目都延期，凭什么评价我们的进度制度？", "这位研究者太年轻，所以她的数据不值得看。", "你没有创业成功，谈的商业建议肯定全错。"] },
+  { name: "诉诸情感", category: "相关性", definition: "用恐惧、同情或愤怒替代对结论的证据。", scenarios: ["想想那些可怜的孩子，所以这项政策不许再质疑。", "如果你爱家人，就必须购买这份保障方案。", "不支持这个计划，就是对团队没有感情。"] },
+  { name: "不当诉诸权威", category: "相关性", definition: "用不相关领域或存在未说明利益的权威替代证据。", scenarios: ["著名演员推荐这款药，所以疗效一定可靠。", "冠军运动员说这个投资产品好，当然不会错。", "科技博主断言这种饮食能治病，所以不必看临床研究。"] },
+  { name: "诉诸大众", category: "相关性", definition: "把很多人相信或购买当作主张为真的证明。", scenarios: ["这门课十万人购买，内容一定科学。", "大家都在用这个指标，所以它肯定合理。", "多数同事支持加班，说明加班文化就是正确的。"] },
+  { name: "稻草人", category: "相关性", definition: "把对方观点歪曲成更弱或更极端的版本再攻击。", scenarios: ["你建议减少一次会议，看来你认为沟通完全没必要。", "他说控制糖分，你却说他想让所有人挨饿。", "她主张审核算法，于是被说成反对一切技术创新。"] },
+  { name: "转移话题", category: "相关性", definition: "抛出无关内容，把注意力从当前问题移开。", scenarios: ["被问预算为何超支，他回答团队去年拿过大奖。", "讨论数据泄露时，负责人突然强调竞争对手也犯过错。", "别人问产品缺陷，他开始讲公司的公益捐赠。"] },
+  { name: "诉诸虚伪", category: "相关性", definition: "用对方没有做到来回避其批评是否成立。", scenarios: ["你自己也熬夜，没资格说睡眠重要。", "你以前也迟到，所以不能指出我的迟到问题。", "环保倡议者也坐飞机，因此减排主张不用讨论。"] },
+  { name: "以偏概全", category: "归纳与因果", definition: "从太少或不具代表性的样本推出普遍结论。", scenarios: ["遇到两位态度差的客服，就说这家公司所有客服都不专业。", "三个远程员工表现好，所以所有岗位都应永久远程。", "听到两次投诉，就断言新版产品人人都不喜欢。"] },
+  { name: "幸存者偏差", category: "归纳与因果", definition: "只看成功或可见样本，忽略退出和失败者。", scenarios: ["只研究创业成功者后总结辍学能带来成功。", "只分析仍在交易的基金，得出基金长期都赚钱。", "采访坚持极端训练且没受伤的人，证明该训练很安全。"] },
+  { name: "后此谬误", category: "归纳与因果", definition: "仅因 B 发生在 A 之后，就认定 A 导致 B。", scenarios: ["换头像后订单增长，因此新头像带来了增长。", "戴上幸运手环后获奖，所以手环提升了能力。", "新主管上任后市场回暖，于是把全部改善归功于主管。"] },
+  { name: "滑坡谬误", category: "归纳与因果", definition: "没有逐步证明，就声称第一步必然导致一串灾难。", scenarios: ["允许一天远程办公，很快就会无人到岗，公司必然解散。", "这次作业延期一天，以后就会彻底失去自律。", "允许一次预算调整，最终一定会演变成无限浪费。"] },
+  { name: "错误类比", category: "归纳与因果", definition: "两对象在决定结论的关键属性上并不相似。", scenarios: ["公司像军队，所以所有决定都不应讨论。", "大脑像硬盘，因此记忆可以无限精确复制。", "城市像家庭，所以公共预算也只该由一个人决定。"] },
+  { name: "偷换概念", category: "含混", definition: "关键词在推理前后改变含义，制造虚假连接。", scenarios: ["员工有表达意见的自由，所以公司必须采纳每条意见。", "法律面前人人平等，所以考试应让所有人得到相同分数。", "健康意味着没有疾病；他没确诊，所以他的生活方式很健康。"] },
+  { name: "合成谬误", category: "含混", definition: "把每个部分的属性直接推给整体。", scenarios: ["每个零件都很轻，所以整台机器一定很轻。", "每位球员都很优秀，所以球队协作必然优秀。", "每项功能都简单，所以整个系统一定简单。"] },
+  { name: "分解谬误", category: "含混", definition: "把整体的属性直接推给每个组成部分。", scenarios: ["这家公司很富有，所以每位员工都很富有。", "这支队伍排名第一，所以每名队员都是同位置第一。", "这本书很易懂，所以其中每一章都很简单。"] },
+  { name: "循环论证", category: "预设", definition: "理由只是把结论换一种说法，未提供独立支持。", scenarios: ["这项制度是最合理的，因为它比其他制度更合乎理性。", "他说的可信，因为他是一个从不说假话的人。", "这本书值得读，因为它是一本很有阅读价值的书。"] },
+  { name: "复杂问语", category: "预设", definition: "问题中预设了尚未被承认的前提。", scenarios: ["你什么时候才停止隐瞒项目风险？", "你已经改掉浪费预算的习惯了吗？", "为什么你的团队总是逃避责任？"] },
+  { name: "虚假两难", category: "预设", definition: "把多个可能压缩成两个极端选项。", scenarios: ["要么马上签约，要么永远错过成功。", "不是完全支持改革，就是反对进步。", "你只能选择高薪或有意义的工作，不可能兼顾。"] },
+  { name: "诉诸无知", category: "预设", definition: "把尚未被证伪当作已经为真，或反过来。", scenarios: ["没人证明这个疗法无效，所以它一定有效。", "尚未发现外星生命，因此宇宙中绝无其他生命。", "你不能证明传闻是假的，所以应该把它当真。"] },
+  { name: "特殊辩护", category: "预设", definition: "规则不利于自己时临时申请没有普遍理由的例外。", scenarios: ["所有人都要按时提交，但我的灵感需要自由，所以我例外。", "数据必须公开，除非数据支持我的结论。", "迟到应扣分，不过资深员工不该受这条规则约束。"] }
+];
+const fallacyNames = fallacies.map(item => item.name);
+fallacies.forEach((fallacy, fallacyIndex) => fallacy.scenarios.forEach((scenario, scenarioIndex) => {
+  const distractors = [3, 7, 11].map(offset => fallacyNames[(fallacyIndex + offset) % fallacyNames.length]).filter(name => name !== fallacy.name).slice(0, 3);
+  addChoice(`logic-fallacy-${fallacyIndex + 1}-${scenarioIndex + 1}`, "logic", `谬误识别 · ${fallacy.category}`, `下面论证最主要的问题是什么？“${scenario}”`, [fallacy.name, ...distractors], 0, `${fallacy.name}：${fallacy.definition} 识别名称之后，还应指出这处断裂如何影响结论。`);
+}));
+
+const causalCases = [
+  { observation: "经常运动的人平均收入更高", confounder: "自律程度或可支配时间同时影响运动与收入", reverse: "较高收入让人更有资源运动", randomized: "随机提供运动计划并长期比较收入相关结果" },
+  { observation: "使用项目管理软件的团队按时交付率更高", confounder: "管理成熟度同时影响工具采用与交付", reverse: "交付要求高的团队更主动采用工具", randomized: "将可比团队随机分配工具培训并比较交付" },
+  { observation: "喝咖啡的人抑郁比例更低", confounder: "社交与生活方式同时影响咖啡饮用和情绪", reverse: "情绪低落者主动减少咖啡因", randomized: "在伦理可行前提下随机分配咖啡摄入并盲法评估" },
+  { observation: "阅读量高的学生考试成绩更好", confounder: "家庭教育资源同时提高阅读量和成绩", reverse: "成绩好的学生更愿意阅读", randomized: "随机提供额外阅读支持并比较后续成绩" },
+  { observation: "采用远程办公的公司离职率更低", confounder: "管理文化同时影响远程政策和留任", reverse: "留任压力促使公司推出远程政策", randomized: "在可比部门随机试行远程政策并比较离职" },
+  { observation: "冥想应用用户的压力评分更低", confounder: "健康意识同时影响使用应用与压力管理", reverse: "压力改善后的人更能坚持使用应用", randomized: "随机邀请一组使用应用并设置主动对照组" },
+  { observation: "培训时长更多的销售业绩更高", confounder: "主管重视程度同时增加培训和资源投入", reverse: "高潜销售更容易获得更多培训", randomized: "将相似销售随机分配不同培训方案" },
+  { observation: "树木更多的街区夏季温度更低", confounder: "建筑密度同时影响绿化与温度", reverse: "本就凉爽宽阔的街区更容易保留树木", randomized: "分阶段随机选择可比街区增加树冠并比较温度" },
+  { observation: "参加社团的学生幸福感更高", confounder: "外向程度同时影响参加社团与幸福感", reverse: "幸福感高的人更愿意参加社团", randomized: "随机提供不同强度的社团参与邀请并跟踪幸福感" },
+  { observation: "写每日计划的人任务完成率更高", confounder: "责任心同时影响计划习惯和完成率", reverse: "任务掌控感高的人更愿意写计划", randomized: "随机要求一组使用计划模板并比较完成率" }
+];
+causalCases.forEach((item, index) => {
+  const confounderOptions = [item.confounder, ...[1, 4, 7].map(offset => causalCases[(index + offset) % causalCases.length].confounder)];
+  const reverseOptions = [item.reverse, ...[2, 5, 8].map(offset => causalCases[(index + offset) % causalCases.length].reverse)];
+  addChoice(`logic-causal-confounder-${index + 1}`, "logic", "因果与统计 · 混杂因素", `观察到“${item.observation}”。哪项是最需要考虑的混杂解释？`, confounderOptions, 0, `混杂因素应同时影响观察中的两个变量。本题需要检查“${item.confounder}”。`);
+  addChoice(`logic-causal-reverse-${index + 1}`, "logic", "因果与统计 · 反向因果", `观察到“${item.observation}”。哪项体现了反向因果？`, reverseOptions, 0, `反向因果把通常假定的方向倒过来：${item.reverse}。`);
+  addChoice(`logic-causal-design-${index + 1}`, "logic", "因果与统计 · 研究设计", `若要更有力地检验“${item.observation}”背后的因果，哪项设计最好？`, [item.randomized, "把现有相关样本扩大十倍但不改变设计", "只采访一位该领域专家", "比较实施前后一次结果且不设对照"], 0, `随机与对照能更好平衡混杂。合适的方向是：${item.randomized}。`);
+});
+
+const statisticalTraps = [
+  ["某学生在一次异常低分后接受辅导，下次回到平时水平，便认定辅导完全有效。还需警惕什么？", ["回归均值", "合成谬误", "诉诸大众", "分解谬误"], 0, "极端表现后自然回到平均可能与干预同时发生。"],
+  ["一种疗法在轻症组和重症组内都更有效，合并数据后却显得更差。最该检查什么？", ["Simpson 悖论与分组比例", "是否有人身攻击", "是否使用了隐喻", "结论是否受欢迎"], 0, "分组基线和样本比例可能让汇总方向反转。"],
+  ["网络投票显示 92% 用户满意。首先应问什么？", ["谁选择参加投票，未参与者是否系统不同", "百分比是否超过 50%", "页面颜色是否影响阅读", "发起者是否名人"], 0, "自选择会让样本系统偏离总体。"],
+  ["某基金榜单只统计目前仍存续的产品，长期收益看起来很高。问题是什么？", ["失败并退市的基金被排除", "样本太大", "使用了演绎推理", "没有任何统计问题"], 0, "只看存活者会高估总体表现。"],
+  ["观察研究有两万人且持续十年，能否仅凭样本大就确认因果？", ["不能，大样本减少随机误差但不自动消除混杂", "能，人数足够就等同随机实验", "能，时间长必然证明机制", "不能，因为所有观察数据都无价值"], 0, "样本量与研究设计解决的是不同问题。"],
+  ["政策实施后指标改善，但同期经济环境也明显变化。最合理的下一步是什么？", ["寻找对照或自然实验以区分政策与环境", "直接把全部改善归给政策", "只引用实施后的一个案例", "因为有混杂就放弃判断"], 0, "需要能产生不同预测的比较设计。"],
+  ["连续五次抽奖未中奖，于是认为第六次中奖概率更高。错在哪里？", ["若每次独立，过去结果不会改变单次概率", "忽略了诉诸权威", "样本过大", "没有使用类比"], 0, "独立事件没有补偿记忆，这是赌徒谬误。"],
+  ["分组数据和总体数据结论相反时，正确做法是什么？", ["检查分层变量、组间基线和样本权重", "永远只相信总体", "永远只相信最小组", "取两个结论的平均"], 0, "应理解数据生成与分层结构，不能机械选一边。"],
+  ["一个干预只在指标极端糟糕时启动，之后指标通常改善。评估效果最需要什么？", ["与相似极端但未干预的对照比较", "只看改善幅度", "询问实施者信心", "增加宣传样本"], 0, "对照有助于分离干预效果与回归均值。"],
+  ["相关不等于因果，是否意味着相关数据没有价值？", ["不是，相关是线索，需结合设计、机制和替代解释", "是，相关永远不能用于行动", "不是，只要相关强就必然因果", "是，只有个人经验有价值"], 0, "目标是恰当把握，而不是轻信或虚无主义。"]
+];
+statisticalTraps.forEach(([question, options, correct, explanation], index) => addChoice(`logic-statistics-${index + 1}`, "logic", "因果与统计 · 统计陷阱", question, options, correct, explanation));
+
+const baseRateCases = [
+  [1000, 0.01, 0.9, 0.05], [2000, 0.02, 0.8, 0.04], [1000, 0.05, 0.9, 0.1], [5000, 0.01, 0.95, 0.02], [2000, 0.1, 0.85, 0.05]
+];
+baseRateCases.forEach(([population, prevalence, sensitivity, falsePositive], index) => {
+  const truePositive = population * prevalence * sensitivity;
+  const falsePositiveCount = population * (1 - prevalence) * falsePositive;
+  const posterior = Math.round(truePositive / (truePositive + falsePositiveCount) * 100);
+  const options = [posterior, Math.round(sensitivity * 100), Math.round(prevalence * 100), Math.min(99, posterior + 20)].map(value => `${value}%`);
+  addChoice(`logic-base-rate-${index + 1}`, "logic", "概率与不确定 · 基率", `在 ${population} 人中，事件基率 ${prevalence * 100}%，检测灵敏度 ${sensitivity * 100}%，假阳性率 ${falsePositive * 100}%。阳性者真正属于该事件的比例约为多少？`, options, 0, `自然频数法：真阳性约 ${round(truePositive, 1)} 人，假阳性约 ${round(falsePositiveCount, 1)} 人，所以比例约 ${posterior}%。`);
+});
+for (let index = 1; index <= 5; index += 1) {
+  const cost = integer(10, 40), reward = integer(3, 12) * 100, probability = pick([0.05, 0.1, 0.2, 0.25]);
+  const expectedPayout = round(reward * probability, 2);
+  const net = round(expectedPayout - cost, 2);
+  addChoice(`logic-expected-value-${index}`, "logic", "概率与不确定 · 期望值", `一次机会成本 ${cost} 元，以 ${probability * 100}% 概率获得 ${reward} 元，否则为 0。单次净期望值是多少？`, [`${net} 元`, `${expectedPayout} 元`, `${reward - cost} 元`, `-${cost} 元`], 0, `净期望值=${probability}×${reward}-${cost}=${net} 元。是否行动还要考虑可重复性与不可承受损失。`);
+}
+const uncertaintyItems = [
+  ["一个人说自己“有 70% 把握”的 100 次预测中约 70 次正确，这说明什么？", ["校准较好", "每次预测都可靠", "不存在随机误差", "一定低估风险"], 0, "校准比较的是一组同把握度预测的长期兑现比例。"],
+  ["新证据在“主张为真”和“主张为假”时都同样常见，它应怎样影响信念？", ["几乎不应改变", "直接提升到 100%", "直接降到 0", "只看证据是否生动"], 0, "没有区分力的证据无法有效更新真假之比。"],
+  ["非常罕见的主张通常需要什么样的证据？", ["区分力更强且可复核的证据", "任何一个个人故事", "更多情绪表达", "只要来自熟人即可"], 0, "低先验需要更强的似然比才能显著提高后验。"],
+  ["期望值为正的机会是否一定应该参加？", ["不一定，还要看是否可重复和最坏损失能否承受", "一定，期望值覆盖所有风险", "一定，只要概率不为零", "不一定，因为期望值从无价值"], 0, "一次性且可能出局的风险不能只看平均。"],
+  ["小样本中极端比例更常见，主要原因是什么？", ["随机波动相对更大", "小样本必然更准确", "事件会补偿过去结果", "总体规律失效"], 0, "大数法则意味着样本增大后平均才更稳定。"],
+  ["面对厚尾风险，哪种策略更合理？", ["关注最坏情况并保留安全余量", "只按平均值规划", "长期没出事就当作绝对安全", "把极端事件概率设为零"], 0, "罕见但巨大影响可能主导结果。"],
+  ["更新信念时为什么不能只看新证据？", ["还需结合原有基率或先验", "旧信息永远比新信息重要", "新证据不能改变观点", "只需听多数意见"], 0, "后验来自先验与证据说明力的共同作用。"],
+  ["怎样训练自己的概率校准？", ["记录预测和概率，定期按结果复盘", "只记录成功预测", "每次都写 50%", "避免给出任何数字"], 0, "可追踪预测让过度或不足自信变得可见。"],
+  ["连续多次出现同一独立结果后，下一次概率如何变化？", ["若机制不变则不因历史自动改变", "必然向相反结果补偿", "必然继续同一结果", "无法使用概率"], 0, "独立事件没有记忆。"],
+  ["用概率表达判断的主要好处是什么？", ["暴露不确定性并允许证据修正", "让所有判断都显得正确", "避免承担任何责任", "替代对证据的分析"], 0, "概率不是含混护甲，而是可复盘的把握度。"]
+];
+uncertaintyItems.forEach(([question, options, correct, explanation], index) => addChoice(`logic-uncertainty-${index + 1}`, "logic", "概率与不确定 · 判断校准", question, options, correct, explanation));
+
+const biases = [
+  { name: "确认偏误", definition: "优先搜集支持已有看法的证据并忽略反例。", scenarios: ["确定某方案好后，只转发支持它的数据。", "投资后只关注看涨分析，屏蔽风险信息。"] },
+  { name: "锚定效应", definition: "判断被最先出现的数字或印象过度影响。", scenarios: ["先看到原价 9999，便觉得 4999 很便宜。", "第一次听到工期三天，后续估计都围绕三天微调。"] },
+  { name: "可得性启发", definition: "把容易想起的事件误认为更常见。", scenarios: ["看了事故新闻后严重高估坐飞机的风险。", "刚听到两起裁员，就断言所有行业都在大规模裁员。"] },
+  { name: "框架效应", definition: "同一结果因表述方式不同而引发不同选择。", scenarios: ["九成存活比一成死亡让人更愿意接受治疗。", "把费用说成每日三元比每年一千多元更易成交。"] },
+  { name: "后见之明", definition: "结果发生后误以为自己早就知道。", scenarios: ["项目失败后说风险从一开始就显而易见。", "比赛结束后坚称赢家本来就毫无悬念。"] },
+  { name: "损失厌恶", definition: "同等数量的损失带来的痛苦大于收益的快乐。", scenarios: ["为避免账面亏损而拒绝更好的重新配置。", "宁可错过高价值方案，也不愿放弃已有小权益。"] },
+  { name: "沉没成本", definition: "因为过去不可收回的投入继续错误选择。", scenarios: ["电影很差却因票钱已付坚持看完。", "项目已投入一年，所以即使前景消失也不肯停止。"] },
+  { name: "禀赋效应", definition: "一旦拥有就系统高估物品价值。", scenarios: ["同一只杯子拥有后卖价远高于购买意愿。", "自己提出的方案总觉得比同等质量的替代方案更好。"] },
+  { name: "即时偏好", definition: "过度重视眼前满足，低估长期收益。", scenarios: ["明知长期储蓄重要，却总把钱花在即时消费。", "为立刻轻松而反复推迟高价值但费力的任务。"] },
+  { name: "群体思维", definition: "为了维持一致而压制异议和风险信息。", scenarios: ["会议上人人私下担忧，公开却无人反对领导方案。", "团队把提出风险的人视为不团结，最终无人再预警。"] },
+  { name: "光环效应", definition: "从一个突出优点推断其他方面也优秀。", scenarios: ["候选人表达流利，就被推断专业能力也一定强。", "品牌设计漂亮，于是用户认为其安全性也更高。"] },
+  { name: "基本归因错误", definition: "解释他人时高估性格、低估处境。", scenarios: ["同事迟到被说成懒惰，却不问是否遇到交通事故。", "用户不会操作就被归因于笨，而不检查界面设计。"] },
+  { name: "过度自信", definition: "系统高估自己判断的准确性。", scenarios: ["从未做过类似项目却给出百分百按时的承诺。", "只凭一次成功便认为自己已经掌握市场规律。"] },
+  { name: "自利归因", definition: "成功归自己能力，失败归外部环境。", scenarios: ["业绩好归功策略，业绩差全怪市场。", "考试高分说是实力，低分只说题目不公平。"] },
+  { name: "规划谬误", definition: "只看理想路径而低估时间和成本。", scenarios: ["每一步按最快时间相加，承诺三天完成复杂迁移。", "不参考过去延期记录，仍按最乐观工期排计划。"] }
+];
+const biasNames = biases.map(item => item.name);
+biases.forEach((bias, biasIndex) => bias.scenarios.forEach((scenario, scenarioIndex) => {
+  const distractors = [2, 5, 9].map(offset => biasNames[(biasIndex + offset) % biasNames.length]).filter(name => name !== bias.name).slice(0, 3);
+  addChoice(`logic-bias-${biasIndex + 1}-${scenarioIndex + 1}`, "logic", "认知偏误", `这段情境最符合哪种偏误？“${scenario}”`, [bias.name, ...distractors], 0, `${bias.name}：${bias.definition} 去偏应依靠流程、外部视角或延迟，而不只是提醒自己。`);
+}));
+
+const analogyCases = [
+  { statement: "管理公司像驾驶赛车，所以决策越集中越好。", difference: "公司需要汇集分散信息，且多数决策没有赛车般的瞬时压力", support: "比较集中与分权团队在不同决策速度下的长期结果" },
+  { statement: "学习像往水桶里加水，所以听课越多学得越多。", difference: "学习者会遗忘、重构和练习，知识不是被动储存的液体", support: "比较仅听课与检索练习组的延迟测验表现" },
+  { statement: "大脑像硬盘，所以记忆可以原样读取。", difference: "记忆会受提取情境影响并被重构，硬盘复制则不改变内容", support: "检验不同提问方式是否系统改变回忆内容" },
+  { statement: "城市像家庭，所以预算应由家长式领导独自决定。", difference: "城市利益主体多元且权利平等，不存在天然家长角色", support: "比较参与式与单一决策在信息质量和公共信任上的结果" },
+  { statement: "员工像机器零件，所以标准化越彻底效率越高。", difference: "员工会学习、反馈并改变动机，零件不会对制度作出策略反应", support: "测量标准化对重复任务与创造任务的不同影响" },
+  { statement: "减肥像做减法，所以只要吃得越少越好。", difference: "身体存在代谢、营养和行为反馈，不是静态算术系统", support: "比较不同热量缺口对长期依从、健康和体重反弹的影响" },
+  { statement: "网络治理像清扫房间，所以删掉坏内容就能解决问题。", difference: "内容生产者会迁移和适应规则，垃圾不会主动规避清扫", support: "观察治理后生产、传播和迁移行为的动态变化" },
+  { statement: "团队像乐队，所以领导只需像指挥一样发出指令。", difference: "许多团队成员同时掌握局部专业信息，任务也未必有固定乐谱", support: "比较信息已知与未知任务中不同领导方式的表现" },
+  { statement: "经济像人体，所以任何衰退都应立即用刺激药物治疗。", difference: "政策会改变预期、分配和长期激励，医学药物类比不直接给出剂量与边界", support: "比较不同衰退成因下刺激政策的短期与长期效果" },
+  { statement: "写作像盖房子，所以必须先完成完整蓝图才能动笔。", difference: "写作过程中会发现和修正观点，蓝图本身也可由草稿生成", support: "比较先详纲与迭代草稿对不同写作任务的质量和效率" }
+];
+analogyCases.forEach((item, index) => {
+  const differenceOptions = [item.difference, ...[1, 3, 6].map(offset => analogyCases[(index + offset) % analogyCases.length].difference)];
+  const supportOptions = [item.support, ...[2, 5, 8].map(offset => analogyCases[(index + offset) % analogyCases.length].support)];
+  addChoice(`logic-analogy-difference-${index + 1}`, "logic", "类比与归纳 · 关键差异", `“${item.statement}” 哪项最准确指出这个类比的关键差异？`, differenceOptions, 0, `类比强度取决于与结论相关的相似和差异。本题关键差异是：${item.difference}。`);
+  addChoice(`logic-analogy-evidence-${index + 1}`, "logic", "类比与归纳 · 证据", `“${item.statement}” 哪项证据最能把比喻推进为可检验判断？`, supportOptions, 0, `类比只能提出假设，真正的支撑应比较结果：${item.support}。`);
+});
+
+const samplingItems = [
+  ["随机抽取多个地区、年龄和收入层的用户后再推测总体，主要改善了什么？", ["样本代表性", "演绎有效性", "情绪感染力", "权威地位"], 0, "更合理的抽样降低只观察单一群体的偏差。"],
+  ["只采访仍在公司的员工来评估离职政策，会漏掉谁？", ["已经离职且无法被现有样本观察的人", "所有管理者", "所有新员工", "随机抽样者"], 0, "沉默的离职者正可能对政策最不满意。"],
+  ["一个生动个案能否直接推翻大型、设计良好的统计研究？", ["通常不能，应检查个案是否代表总体或揭示研究边界", "能，故事永远比统计可靠", "能，只要讲述者真诚", "不能，因为个案永远无信息"], 0, "个案可提示机制或例外，但不能自动替代总体证据。"],
+  ["归纳结论为什么应保留限定词？", ["有限观察无法逻辑保证所有未观察案例", "限定词让句子更长", "归纳等同演绎", "样本越多结论越不可信"], 0, "归纳支持有强弱，但始终是或然的。"],
+  ["评价网络问卷最先检查哪一点？", ["参与者如何被招募及谁更愿意回答", "问卷标题字体", "发布者粉丝数", "结果是否符合直觉"], 0, "自选择机制决定样本向谁偏移。"],
+  ["只列举两位成功的强势创始人，不能证明强势导致成功，主要因为？", ["样本小且忽略大量失败者与替代原因", "成功者没有任何信息", "归纳结论必须为假", "公司不能比较"], 0, "仓促概括与幸存者偏差共同削弱推断。"],
+  ["怎样使类比更诚实？", ["同时说明贴切点、适用边界和失真点", "只强调最生动的共同点", "把类比说成定律", "删除所有反例"], 0, "主动说明失真点能防止类比被推得过远。"],
+  ["发现一个反例后，最合理的动作是什么？", ["检查原结论是否过强并增加条件或缩小范围", "断言所有数据无效", "忽略反例", "改为攻击反例提出者"], 0, "反例常用于修正普遍量词和适用边界。"],
+  ["样本量很大是否自动代表总体？", ["不，系统偏差不会因重复同类样本而消失", "是，大样本必然随机", "是，只要超过一千", "不，因为小样本总更好"], 0, "大量有偏样本只会更精确地估计错误总体。"],
+  ["一个好类比最重要的评价标准是什么？", ["相似属性是否与要推出的结论直接相关", "是否足够新奇", "是否来自名人", "是否让听众感动"], 0, "相关相似决定推理价值，生动性只影响传播。"]
+];
+samplingItems.forEach(([question, options, correct, explanation], index) => addChoice(`logic-induction-${index + 1}`, "logic", "类比与归纳 · 样本", question, options, correct, explanation));
+
+const languageCases = [
+  { statement: "这个方案很先进。", issue: "含混", clarification: "“先进”按什么可观察指标判断，与哪个基准比较？" },
+  { statement: "他不是一个好负责人。", issue: "歧义", clarification: "这里的“好”指业绩、管理、公平还是道德？" },
+  { statement: "公司尊重自由，所以所有个人决定都不应受团队规则约束。", issue: "偷换概念", clarification: "前后的“自由”分别指自主空间还是完全不受约束？" },
+  { statement: "真正自律的人从不会中断计划。", issue: "不断改窄定义排除反例", clarification: "暂时中断但能恢复的人为何被定义为不自律？" },
+  { statement: "我们会在适当时候显著改善体验。", issue: "含混", clarification: "“适当时候”和“显著改善”各对应什么期限与指标？" },
+  { statement: "公平就是每个人得到完全相同的结果。", issue: "定义过窄", clarification: "公平是否也可能指程序一致、机会平等或按需分配？" },
+  { statement: "这项措施有效，因为它产生了好的效果。", issue: "循环定义", clarification: "请独立定义“有效”和“好效果”，并给出测量标准。" },
+  { statement: "成熟的人不会表达脆弱。", issue: "定义夹带价值判断", clarification: "成熟应属于哪类能力，表达脆弱为何必然被排除？" },
+  { statement: "所有人都支持正常的工作强度。", issue: "含混并预设共识", clarification: "“正常”具体是多少，由谁定义，是否真的所有人同意？" },
+  { statement: "专业就是永远不给出不确定答案。", issue: "定义过窄", clarification: "专业是否更应包括识别证据边界和诚实表达不确定性？" }
+];
+const languageIssueNames = [...new Set(languageCases.map(item => item.issue)), "诉诸大众", "形式无效"];
+languageCases.forEach((item, index) => {
+  const issueOptions = [item.issue, ...[1, 3, 5].map(offset => languageIssueNames[(languageIssueNames.indexOf(item.issue) + offset) % languageIssueNames.length]).filter(value => value !== item.issue).slice(0, 3)];
+  const clarificationOptions = [item.clarification, ...[2, 4, 7].map(offset => languageCases[(index + offset) % languageCases.length].clarification)];
+  addChoice(`logic-language-issue-${index + 1}`, "logic", "语言与定义", `分析这句话：“${item.statement}” 最主要的语言问题是什么？`, issueOptions, 0, `${item.issue}。在评价观点前，应先固定关键词的所指、边界和测量方式。`);
+  addChoice(`logic-language-clarify-${index + 1}`, "logic", "语言与定义", `面对“${item.statement}”，哪句澄清问题最有效？`, clarificationOptions, 0, item.clarification);
+});
+
+const judgmentItems = [
+  ["面对“要么立即辞职追求理想，要么一生平庸”，第一步应做什么？", ["列出被隐藏的中间选项", "接受二选一", "先判断说话者身份", "只比较情绪强度"], 0, "虚假两难常隐藏试验、过渡和组合方案。", "价值权衡"],
+  ["已经为失败项目投入很多，决定今天是否继续时最有用的问题是？", ["如果此前投入归零，我今天还会选它吗", "怎样让过去投入看起来值得", "谁最先提出项目", "别人会不会笑我"], 0, "归零重选能把沉没成本与未来收益分开。", "价值权衡"],
+  ["选择 A 的机会成本是什么？", ["被放弃选项中价值最高的收益", "已经为 A 支付的全部成本", "A 的最坏结果", "所有未选择选项价值之和"], 0, "机会成本关注最优替代用途。", "价值权衡"],
+  ["公共预算争论中，怎样把道德站队还原为可讨论问题？", ["分别说明双方保护的价值、资源约束和优先级", "把反对者描述为冷漠", "宣布生命无法衡量所以无限投入", "只统计支持人数"], 0, "价值都正当时，应明确权衡与成本。", "价值权衡"],
+  ["“我同意照顾个体，同时有限预算也要考虑总体效果”体现了什么？", ["承认双方价值并明确权衡", "取消所有立场", "虚假两难", "诉诸无知"], 0, "高级回应可以同时承认价值和坚持资源约束。", "价值权衡"],
+  ["为自己反对的立场写出对方认可的最强版本，叫什么？", ["钢人原则", "稻草人", "循环论证", "诉诸虚伪"], 0, "钢人先准确增强对方，再回应真实分歧。", "价值权衡"],
+  ["比较两个选择时，反事实问题的作用是什么？", ["估计如果未选择当前路径可能发生什么", "证明当前选择必错", "删除不确定性", "只回顾已经投入"], 0, "反事实提供因果和机会成本的参照。", "价值权衡"],
+  ["一个真正的 trade-off 意味着什么？", ["改善一个目标会损害另一个目标", "两目标可以无成本同时最大化", "只有一个目标有价值", "问题没有任何方案"], 0, "权衡要求说明愿意牺牲什么以及为何。", "价值权衡"],
+  ["演讲者用专业经历建立可信度，主要使用哪种说服资源？", ["Ethos", "Pathos", "Logos", "Post hoc"], 0, "Ethos 来自与议题相关的信誉与品格。", "修辞与说服"],
+  ["用具体受害场景唤起同情，主要属于？", ["Pathos", "Logos", "演绎", "基率"], 0, "Pathos 调动情绪；它可以辅助理解，但不能替代证据。", "修辞与说服"],
+  ["列出可核查数据并解释如何支持主张，主要属于？", ["Logos", "Pathos", "身份绑架", "从众"], 0, "Logos 依赖证据与推理连接。", "修辞与说服"],
+  ["“最后一分钟，不立刻购买就是没有魄力”最值得警惕什么？", ["稀缺感与身份绑架绕过价值评估", "演绎结构过强", "样本量过大", "定义过于精确"], 0, "时间压力和身份评价不能证明产品值得。", "修辞与说服"],
+  ["面对来源不明的“90% 成功者都这样做”，最佳反应是？", ["追问样本、定义、来源和因果方向", "因数字很大立即相信", "因为是销售说的就断言为假", "只看演讲者是否自信"], 0, "既不轻信伪数据，也不犯起源谬误。", "修辞与说服"],
+  ["受众分析最重要的是了解什么？", ["他们已知什么、在意什么、会如何反驳", "怎样让所有人产生相同情绪", "怎样隐藏限定条件", "怎样减少证据"], 0, "同一主张面对不同受众需要不同解释入口。", "修辞与说服"],
+  ["把“你的方案不现实”改成哪句最能推进对话？", ["方案依赖哪些条件，哪个条件目前证据最弱？", "你根本不懂现实", "所有人都反对你", "先证明我错"], 0, "可回答的问题能定位条件和证据。", "提问与对话"],
+  ["讨论前先问“这里的公平具体指什么”，属于哪类问题？", ["概念澄清", "人身攻击", "诉诸情感", "后此归因"], 0, "澄清所指能确认双方是否讨论同一对象。", "提问与对话"],
+  ["双方对同一事实都认可，却对该优先保护谁意见不同，分歧主要在哪一层？", ["价值与优先级", "事实真假", "词语发音", "形式有效性"], 0, "事实共识不消除价值权重差异。", "提问与对话"],
+  ["“什么证据会让你改变看法”主要检查什么？", ["立场是否可证伪并开放更新", "说话者是否自信", "观点是否流行", "句子是否优美"], 0, "若没有任何可能改变立场的证据，它更像信仰而非判断。", "提问与对话"],
+  ["思考一个政策时连续追问“然后呢”，主要在训练什么？", ["二阶思维", "诉诸无知", "词义澄清", "样本扩大"], 0, "二阶思维关注行动后各方反应和后续连锁结果。", "心智模型"],
+  ["假设项目已经失败，再倒推原因，这种方法是什么？", ["事前验尸与逆向思维", "后见之明", "循环论证", "从众偏误"], 0, "从失败倒推能提前暴露脆弱路径。", "心智模型"]
+];
+judgmentItems.forEach(([question, options, correct, explanation, topic], index) => addChoice(`logic-judgment-${index + 1}`, "logic", topic, question, options, correct, explanation));
+
+if (questions.length - manualLogicStart !== 260) throw new Error(`Expected 260 manual-based logic questions, found ${questions.length - manualLogicStart}`);
+
 // IELTS academic vocabulary and grammar collocations.
 const vocabulary = [
   ["abundant", "plentiful"], ["allocate", "assign"], ["ambiguous", "unclear"], ["coherent", "logical"], ["compelling", "convincing"],
@@ -340,8 +584,8 @@ const payload = {
   bank: {
     id: "open-practice-2026",
     title: "高级数学与综合能力原创练习题库",
-    version: "3.0.0",
-    description: "由确定性脚本生成，覆盖优化、矩阵论、随机过程、高等概率论、逻辑、雅思学术语言与写作。",
+    version: "4.0.0",
+    description: "由确定性脚本生成，覆盖高级数学、逻辑与论证、雅思学术语言和写作；逻辑课程结构参考用户提供的学习手册与习题册并以原创情境重写。",
     generator: "scripts/generate-open-bank.mjs",
     source: SOURCE,
     license: RIGHTS
