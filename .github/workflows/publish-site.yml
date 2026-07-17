@@ -28,11 +28,11 @@ jobs:
         run: npm run build
       - name: Configure deployment key
         env:
-          DEPLOY_KEY: ${{ secrets.PAGES_DEPLOY_KEY }}
+          DEPLOY_KEY_B64: ${{ secrets.PAGES_DEPLOY_KEY_B64 }}
         run: |
-          test -n "$DEPLOY_KEY"
+          test -n "$DEPLOY_KEY_B64"
           mkdir -p ~/.ssh
-          printf '%s' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          printf '%s' "$DEPLOY_KEY_B64" | base64 --decode > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan github.com >> ~/.ssh/known_hosts
       - name: Publish build to Pages repository
