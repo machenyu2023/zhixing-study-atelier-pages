@@ -2,19 +2,25 @@
 
 ## 当前规模
 
-项目包含 55 道基础题和 1225 道脚本生成题，共 1280 道：
+项目包含 55 道基础题、1225 道综合参数化题和 300 道原创 IELTS 风格题，共 1580 道：
 
 - 优化 160 道；
 - 矩阵论 160 道；
 - 随机过程 160 道；
 - 高等概率论 160 道；
 - 逻辑 420 道，覆盖条件推理、论证结构、Toulmin 模型、五类谬误、因果与统计、概率与不确定性、认知偏误、类比与归纳、定义、价值、修辞、对话和心智模型；其中 60 道习题册衍生题对应六卷训练主题，但属于另外生成的配套练习，不冒充教材原题；
-- 雅思学术语言 120 道；
+- 雅思 425 道：原有 125 道基础与学术语言题，加上 300 道全英文原创题；新增部分包括 Academic Reading 160 道、transcript-based Listening 60 道、Academic Writing 40 道、Academic Language Accuracy 40 道；
 - 写作 45 道。
 
 高级数学不只做基础参数替换，还覆盖 KKT 与 Lagrange 乘子、光滑优化步长、Jordan 标准形、Rayleigh 商、SVD 与谱范数、鞅、平稳 AR(1)、随机变量收敛方式、中心极限定理、特征函数和 Borel-Cantelli 引理。四道旧的初等数学题也已替换为这四门课程的概念题，因此内置数学题全部归入上述方向。
 
-运行 `npm run generate:bank` 可以从固定种子重新生成完全相同的题库。`npm test` 会检查题量、唯一 ID、答案结构、数值容差、解析和来源字段。
+运行 `npm run generate:bank` 和 `npm run generate:ielts` 可以重新生成完全相同的题库。`npm test` 会检查题量、唯一 ID、答案结构、数值容差、解析和来源字段，并额外检查原创 IELTS 题库不含中文题面、不含重复题干且没有复制官方题面的标记。
+
+## IELTS 官方格式参考
+
+运行 `npm run sync:ielts:sources` 会读取 IELTS 官方的 Academic 总览、Reading、Listening、Writing 和 sample questions 索引页，并更新 `data/sources/ielts-official-spec.json`。快照只保留结构事实和页面哈希，不保留官方样题正文。
+
+原创题库将 Reading、Listening 和 Writing 题分别链接到对应的官方题型说明页。`sourceUrl` 只证明格式参考依据，题目的文字内容及答案均来自本项目。不得将同步脚本改造成试卷下载器，也不得把第三方“回忆题”“真题整理”或培训机构模拟卷混入原创题库。
 
 ## 接入公开资源
 

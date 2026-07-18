@@ -276,7 +276,11 @@ svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .quiz-question { overflow-wrap: anywhere; white-space: pre-line; }
 .reading-passage { margin: 24px 0 8px; padding: 22px 24px; border-left: 3px solid var(--blue); background: #f2f5f7; }
 .reading-passage > span { color: var(--blue); font-size: 9px; font-weight: 700; letter-spacing: 1.2px; }
-.reading-passage p { margin: 10px 0 0; color: #4f5853; font-family: Georgia, "Songti SC", serif; font-size: 14px; line-height: 1.9; }
+.reading-passage p { margin: 10px 0 0; color: #4f5853; font-family: Georgia, "Songti SC", serif; font-size: 14px; line-height: 1.9; white-space: pre-line; }
+.question-attribution { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid #d9dfdb; color: #5b645f; font-size: 11px; line-height: 1.6; }
+.question-attribution strong { margin: 0; color: #36403a; font-family: inherit; font-size: 11px; }
+.question-attribution a { color: var(--blue); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.question-attribution small { flex-basis: 100%; color: #7a827e; font-size: 10px; }
 .open-paper .quiz-question { margin-bottom: 19px; font-size: 18px; }
 .open-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 2px 8px; color: var(--muted); font-size: 9px; }
 .open-editor-head strong { font-weight: 600; }

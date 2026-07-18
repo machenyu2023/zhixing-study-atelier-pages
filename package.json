@@ -7,8 +7,10 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
     "generate:bank": "node scripts/generate-open-bank.mjs",
+    "generate:ielts": "node scripts/generate-ielts-bank.mjs",
+    "sync:ielts:sources": "node scripts/sync-ielts-official-sources.mjs",
     "extract:curriculum": "node scripts/extract-curriculum.mjs",
-    "check": "node scripts/generate-open-bank.mjs && node --check app.js && node --check workbook-bank.js && node --check curriculum-renderer.js && node --check storage.js && node --check config.js && node --check server.mjs && node scripts/validate-project.mjs",
+    "check": "node scripts/generate-open-bank.mjs && node scripts/generate-ielts-bank.mjs && node --check scripts/sync-ielts-official-sources.mjs && node --check app.js && node --check workbook-bank.js && node --check curriculum-renderer.js && node --check storage.js && node --check config.js && node --check server.mjs && node scripts/validate-project.mjs",
     "build": "node scripts/build-static.mjs",
     "test": "npm run check"
   },

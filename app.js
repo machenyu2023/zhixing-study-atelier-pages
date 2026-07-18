@@ -13,7 +13,10 @@ const SCORE_DIMENSIONS = [
   { key: "expression_quality", label: "表达质量" }
 ];
 
-const BUNDLED_BANK_URLS = ["data/question-banks/open-practice-bank.json"];
+const BUNDLED_BANK_URLS = [
+  "data/question-banks/open-practice-bank.json",
+  "data/question-banks/ielts-original-bank.json"
+];
 const CURRICULUM_URL = "data/curriculum/curriculum-source.json";
 const VOLUME_NUMERALS = ["一", "二", "三", "四", "五", "六"];
 const HANDBOOK_PRACTICE_TOPICS = {
@@ -536,6 +539,35 @@ function startPractice(subject, specificId) {
   renderQuestion();
 }
 
+function renderQuestionPassage(question) {
+  if (!question.passage) return "";
+  const label = question.taskType?.includes("Listening") || question.topic?.startsWith("Listening Transcript")
+    ? "LISTENING TRANSCRIPT"
+    : question.taskType?.includes("Writing")
+      ? "TASK INFORMATION"
+      : "READING PASSAGE";
+  return `<section class="reading-passage"><span>${label}</span><p>${escapeHtml(question.passage)}</p></section>`;
+}
+
+function renderQuestionAttribution(question) {
+  if (!question.sourceUrl && !question.source) return "";
+  let sourceLink = "";
+  if (question.sourceUrl) {
+    try {
+      const url = new URL(question.sourceUrl);
+      if (["http:", "https:"].includes(url.protocol)) {
+        sourceLink = `<a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer">查看官方题型说明</a>`;
+      }
+    } catch {
+      sourceLink = "";
+    }
+  }
+  const originalNotice = question.referenceOnly === true && question.officialQuestionTextCopied === false
+    ? "本题为项目原创；官方链接仅用于参考题型结构，未复制或改写官方样题正文。"
+    : "请根据来源和许可说明核对题目使用范围。";
+  return `<aside class="question-attribution"><strong>来源与版权</strong><span>${originalNotice}</span>${sourceLink}<small>${escapeHtml(question.source || "个人题库")}</small></aside>`;
+}
+
 function renderQuestion() {
   const question = practiceQueue[practiceIndex];
   if (question.type === "open") {
@@ -550,6 +582,7 @@ function renderQuestion() {
   $("#practice-stage").innerHTML = `<div class="practice-progress"><span>${practiceIndex + 1} / ${practiceQueue.length}</span><div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div><span>${SUBJECTS[question.subject].name} · ${question.topic}</span></div>
     <div class="quiz-paper">
       <div class="quiz-meta"><span style="color:${SUBJECTS[question.subject].color}">${SUBJECTS[question.subject].label} / ${question.difficulty}</span><button type="button" id="flag-question" class="${state.flaggedIds.includes(question.id) ? "active" : ""}" title="标记题目" aria-label="标记题目"><i data-lucide="bookmark"></i></button></div>
+      ${renderQuestionPassage(question)}
       <div class="quiz-question">${escapeHtml(question.question)}</div>
       <div class="answer-options">${question.options.map((option, index) => `<button class="answer-option" type="button" data-answer="${index}"><span class="answer-letter">${String.fromCharCode(65 + index)}</span><span>${escapeHtml(option)}</span></button>`).join("")}</div>
       <div id="explanation-slot"></div>
@@ -567,6 +600,7 @@ function renderFillQuestion(question) {
   $("#practice-stage").innerHTML = `<div class="practice-progress"><span>${practiceIndex + 1} / ${practiceQueue.length}</span><div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div><span>${SUBJECTS[question.subject].name} · ${question.topic}</span></div>
     <div class="quiz-paper">
       <div class="quiz-meta"><span style="color:${SUBJECTS[question.subject].color}">${SUBJECTS[question.subject].label} / ${question.difficulty}</span><button type="button" id="flag-question" class="${state.flaggedIds.includes(question.id) ? "active" : ""}" title="标记题目" aria-label="标记题目"><i data-lucide="bookmark"></i></button></div>
+      ${renderQuestionPassage(question)}
       <div class="quiz-question">${escapeHtml(question.question)}</div>
       <label class="fill-answer-field"><span>填写答案</span><input id="fill-answer" type="text" autocomplete="off" aria-label="填空题答案" placeholder="输入答案后提交" /></label>
       <div id="explanation-slot"></div>
@@ -607,7 +641,7 @@ function submitFillAnswer(question) {
   input.disabled = true;
   input.classList.add(correct ? "correct" : "incorrect");
   const reference = question.answers[0];
-  $("#explanation-slot").innerHTML = `<div class="explanation ${correct ? "" : "incorrect"}"><strong>${correct ? "回答正确" : `参考答案：${escapeHtml(reference)}`}</strong><p>${escapeHtml(question.explanation)}</p></div>`;
+  $("#explanation-slot").innerHTML = `<div class="explanation ${correct ? "" : "incorrect"}"><strong>${correct ? "回答正确" : `参考答案：${escapeHtml(reference)}`}</strong><p>${escapeHtml(question.explanation)}</p>${renderQuestionAttribution(question)}</div>`;
   const submit = $("#submit-answer");
   submit.disabled = false;
   submit.innerHTML = practiceIndex < practiceQueue.length - 1 ? '下一题<i data-lucide="arrow-right"></i>' : '完成本组<i data-lucide="check"></i>';
@@ -658,7 +692,7 @@ function submitAnswer() {
     if (index === question.answer) button.classList.add("correct");
     if (index === selectedAnswer && !correct) button.classList.add("incorrect");
   });
-  $("#explanation-slot").innerHTML = `<div class="explanation ${correct ? "" : "incorrect"}"><strong>${correct ? "回答正确" : "这次没有答对"}</strong><p>${escapeHtml(question.explanation)}</p></div>`;
+  $("#explanation-slot").innerHTML = `<div class="explanation ${correct ? "" : "incorrect"}"><strong>${correct ? "回答正确" : "这次没有答对"}</strong><p>${escapeHtml(question.explanation)}</p>${renderQuestionAttribution(question)}</div>`;
   const submit = $("#submit-answer");
   submit.disabled = false;
   submit.innerHTML = practiceIndex < practiceQueue.length - 1 ? '下一题<i data-lucide="arrow-right"></i>' : '完成本组<i data-lucide="check"></i>';
@@ -668,11 +702,10 @@ function submitAnswer() {
 function renderOpenQuestion(question) {
   const percent = (practiceIndex / practiceQueue.length) * 100;
   const saved = state.openResponses[question.id]?.content || "";
-  const passage = question.passage ? `<section class="reading-passage"><span>阅读材料</span><p>${escapeHtml(question.passage)}</p></section>` : "";
   $("#practice-stage").innerHTML = `<div class="practice-progress"><span>${practiceIndex + 1} / ${practiceQueue.length}</span><div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div><span>${SUBJECTS[question.subject].name} · ${question.taskType}</span></div>
     <div class="quiz-paper open-paper">
       <div class="quiz-meta"><span style="color:${SUBJECTS[question.subject].color}">${question.taskType.toUpperCase()} / ${escapeHtml(question.topic)}</span><button type="button" id="flag-question" class="${state.flaggedIds.includes(question.id) ? "active" : ""}" title="标记题目" aria-label="标记题目"><i data-lucide="bookmark"></i></button></div>
-      ${passage}
+      ${renderQuestionPassage(question)}
       <div class="quiz-question">${escapeHtml(question.question)}</div>
       <div class="open-editor-head"><span id="open-save-status">${saved ? "已载入上次作答" : "原始作答"}</span><strong id="open-response-count">${formatResponseCount(saved, question.wordTarget)}</strong></div>
       <textarea id="open-response" class="open-response" aria-label="开放题作答" placeholder="先写一句明确判断，再展开理由……">${escapeHtml(saved)}</textarea>
@@ -746,6 +779,7 @@ function renderOpenReview(question, content) {
       <button class="secondary-button compact" id="copy-review-prompt" type="button"><i data-lucide="copy"></i>复制批改提示词</button>
       <button class="secondary-button compact" id="export-review-prompt" type="button"><i data-lucide="file-down"></i>导出阅卷 Prompt</button>
     </div>
+    ${renderQuestionAttribution(question)}
     <div id="ai-grade-result"></div>
   </section>`;
   $$('[data-score-dimension]').forEach(input => input.addEventListener("input", () => {

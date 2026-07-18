@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "retrievedAt": "2026-07-18T05:44:42.923Z",
+  "authority": "IELTS official website",
+  "policy": {
+    "use": "Exam structure and task-format reference only",
+    "officialQuestionTextStored": false,
+    "officialQuestionTextCopied": false,
+    "generatedQuestionsLanguage": "English",
+    "generatedQuestionsOwnership": "Project original",
+    "trademarkAffiliationClaimed": false
+  },
+  "pages": [
+    {
+      "id": "academic-overview",
+      "url": "https://ielts.org/take-a-test/test-types/ielts-academic-test",
+      "title": "IELTS | IELTS Academic test format and sections",
+      "description": "Learn about the IELTS Academic test format, including Listening, Reading, Writing and Speaking sections, timings and what to expect on test day.",
+      "contentSha256": "ada03cfb3d93f2f2e71b553f5b88b87d20213d1c50c532bfa77481ac8d61b455",
+      "facts": {
+        "sections": [
+          "Listening",
+          "Reading",
+          "Writing",
+          "Speaking"
+        ]
+      }
+    },
+    {
+      "id": "academic-reading-format",
+      "url": "https://ielts.org/take-a-test/test-types/ielts-academic-test/ielts-academic-format-reading",
+      "title": "IELTS | IELTS Academic: Reading test format",
+      "description": "Explore the IELTS Academic Reading test format, question types, timings and skills assessed across three academic reading passages.",
+      "contentSha256": "7d2f15ba40e1f5f7cbf3a659a03f8783c8ab4d8701d6de94aca7786213875ab0",
+      "facts": {
+        "durationMinutes": 60,
+        "sections": 3,
+        "questions": 40,
+        "totalTextLength": "2150-2750 words",
+        "taskTypes": [
+          "Multiple choice",
+          "Identifying information",
+          "Identifying writer's views or claims",
+          "Matching information",
+          "Matching headings",
+          "Matching features",
+          "Matching sentence endings",
+          "Sentence completion",
+          "Summary completion",
+          "Note completion",
+          "Table completion",
+          "Flow-chart completion",
+          "Diagram label completion",
+          "Short-answer questions"
+        ]
+      }
+    },
+    {
+      "id": "academic-listening-format",
+      "url": "https://ielts.org/take-a-test/test-types/ielts-academic-test/ielts-academic-format-listening",
+      "title": "IELTS | IELTS Academic: Listening test format",
+      "description": "Explore the IELTS Academic Listening test format, question types, timings and skills assessed in this four-part section of the test.",
+      "contentSha256": "aa685f6a27b5a93201e4234def12064b9e4134bb44bfb34399c134bd627dc469",
+      "facts": {
+        "durationMinutesApproximate": 30,
+        "parts": 4,
+        "questions": 40,
+        "recordingPlays": 1,
+        "taskTypes": [
+          "Multiple choice",
+          "Matching",
+          "Plan, map or diagram labelling",
+          "Form completion",
+          "Note completion",
+          "Table completion",
+          "Flow-chart completion",
+          "Summary completion",
+          "Sentence completion",
+          "Short-answer questions"
+        ]
+      }
+    },
+    {
+      "id": "academic-writing-format",
+      "url": "https://ielts.org/take-a-test/test-types/ielts-academic-test/ielts-academic-format-writing",
+      "title": "IELTS | IELTS Academic: Writing test format",
+      "description": "Explore the IELTS Academic Writing test format, including Task 1, Task 2, timings, word counts and the skills assessed.",
+      "contentSha256": "44c45873d72253cfb52deab6b740920960c73b9e6492036372f3d802cfd041ce",
+      "facts": {
+        "durationMinutes": 60,
+        "tasks": 2,
+        "task1MinimumWords": 150,
+        "task1SuggestedMinutes": 20,
+        "task2MinimumWords": 250,
+        "task2SuggestedMinutes": 40,
+        "task2WeightRelativeToTask1": 2
+      }
+    },
+    {
+      "id": "academic-sample-index",
+      "url": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions/academic-test",
+      "title": "IELTS | IELTS Academic sample test questions",
+      "description": "Practise for IELTS Academic with official sample questions for Listening, Reading, Writing and Speaking.",
+      "contentSha256": "7b9a01e21ba63ba60198c5da6ee48389c014eeb6753d500b880ece8806ed6433",
+      "facts": {
+        "readingSourceTypes": [
+          "books",
+          "journals",
+          "magazines",
+          "newspapers"
+        ],
+        "samplePurpose": "Demonstrates official task formats; official question text is not copied into this project."
+      }
+    }
+  ]
+}

@@ -9,10 +9,12 @@ const appSource = await readFile(new URL("app.js", root), "utf8");
 const coreBlock = appSource.slice(appSource.indexOf("const QUESTIONS"), appSource.indexOf("const WRITING_PROMPTS"));
 const coreQuestions = vm.runInNewContext(`${coreBlock}\nQUESTIONS`);
 const curriculum = JSON.parse(await readFile(new URL("data/curriculum/curriculum-source.json", root), "utf8"));
+const ieltsOfficialSpec = JSON.parse(await readFile(new URL("data/sources/ielts-official-spec.json", root), "utf8"));
 const allQuestions = [...coreQuestions, ...workbookQuestions];
 const exampleBank = JSON.parse(await readFile(new URL("data/question-banks/example-bank.json", root), "utf8"));
 const generatedBank = JSON.parse(await readFile(new URL("data/question-banks/open-practice-bank.json", root), "utf8"));
-allQuestions.push(...generatedBank.questions);
+const ieltsOriginalBank = JSON.parse(await readFile(new URL("data/question-banks/ielts-original-bank.json", root), "utf8"));
+allQuestions.push(...generatedBank.questions, ...ieltsOriginalBank.questions);
 
 const errors = [];
 const ids = new Set();
@@ -39,7 +41,7 @@ const generatedTypeCounts = Object.fromEntries(["choice", "fill", "open"].map(ty
 for (const [type, expected] of Object.entries({ choice: 475, fill: 675, open: 75 })) {
   if (generatedTypeCounts[type] !== expected) errors.push(`Expected ${expected} generated ${type} questions, found ${generatedTypeCounts[type]}`);
 }
-if (allQuestions.length !== 1280) errors.push(`Expected 1280 total questions, found ${allQuestions.length}`);
+if (allQuestions.length !== 1580) errors.push(`Expected 1580 total questions, found ${allQuestions.length}`);
 const generatedLogic = generatedBank.questions.filter(question => question.subject === "logic");
 if (generatedLogic.length !== 420) errors.push(`Expected 420 generated logic questions, found ${generatedLogic.length}`);
 const totalLogic = allQuestions.filter(question => question.subject === "logic").length;
@@ -81,6 +83,60 @@ for (const question of coreQuestions.filter(question => question.subject === "ma
 }
 for (const question of generatedBank.questions) {
   if (!question.source || !question.license) errors.push(`Generated question needs source and license metadata: ${question.id}`);
+}
+if (ieltsOriginalBank.schemaVersion !== 1 || ieltsOriginalBank.bank?.id !== "ielts-original-2026" || ieltsOriginalBank.questions.length !== 300) {
+  errors.push("Expected the original IELTS-style bank with 300 questions");
+}
+const ieltsSectionCounts = {
+  reading: ieltsOriginalBank.questions.filter(question => question.id.startsWith("ielts-reading-")).length,
+  listening: ieltsOriginalBank.questions.filter(question => question.id.startsWith("ielts-listening-")).length,
+  writing: ieltsOriginalBank.questions.filter(question => question.id.startsWith("ielts-writing-")).length,
+  language: ieltsOriginalBank.questions.filter(question => question.id.startsWith("ielts-language-")).length
+};
+for (const [section, expected] of Object.entries({ reading: 160, listening: 60, writing: 40, language: 40 })) {
+  if (ieltsSectionCounts[section] !== expected) errors.push(`Expected ${expected} IELTS ${section} questions, found ${ieltsSectionCounts[section]}`);
+}
+const ieltsTypeCounts = Object.fromEntries(["choice", "fill", "open"].map(type => [type, ieltsOriginalBank.questions.filter(question => question.type === type).length]));
+for (const [type, expected] of Object.entries({ choice: 170, fill: 90, open: 40 })) {
+  if (ieltsTypeCounts[type] !== expected) errors.push(`Expected ${expected} IELTS ${type} questions, found ${ieltsTypeCounts[type]}`);
+}
+const ieltsPrompts = new Set();
+const englishOnlyFields = ["question", "passage", "options", "answers", "explanation", "topic", "taskType", "checkpoints"];
+const collectStrings = (value, key = "") => {
+  if (typeof value === "string") return [[key, value]];
+  if (Array.isArray(value)) return value.flatMap(item => collectStrings(item, key));
+  if (value && typeof value === "object") return Object.entries(value).flatMap(([childKey, child]) => collectStrings(child, childKey));
+  return [];
+};
+for (const question of ieltsOriginalBank.questions) {
+  if (question.subject !== "ielts") errors.push(`IELTS bank contains another subject: ${question.id}`);
+  if (ieltsPrompts.has(question.question)) errors.push(`IELTS bank has a duplicate prompt: ${question.id}`);
+  ieltsPrompts.add(question.question);
+  if (!question.source || question.license !== "Project Original - personal study use" || question.referenceOnly !== true || question.officialQuestionTextCopied !== false || !question.sourceUrl?.startsWith("https://ielts.org/")) {
+    errors.push(`IELTS question has invalid source metadata: ${question.id}`);
+  }
+  if (!question.explanation || !question.taskType) errors.push(`IELTS question lacks explanation or task type: ${question.id}`);
+  if (question.type === "choice" && (new Set(question.options).size !== question.options.length || question.answer < 0 || question.answer >= question.options.length)) {
+    errors.push(`IELTS choice options or answer are invalid: ${question.id}`);
+  }
+  for (const [key, value] of collectStrings(question)) {
+    if (englishOnlyFields.includes(key) && /[\u3400-\u9fff]/u.test(value)) errors.push(`IELTS question contains Chinese text: ${question.id}.${key}`);
+  }
+}
+const totalIelts = allQuestions.filter(question => question.subject === "ielts").length;
+if (totalIelts !== 425) errors.push(`Expected 425 total IELTS questions, found ${totalIelts}`);
+if (ieltsOfficialSpec.schemaVersion !== 1 || ieltsOfficialSpec.authority !== "IELTS official website" || ieltsOfficialSpec.pages?.length !== 5) {
+  errors.push("IELTS official format snapshot is incomplete");
+}
+if (ieltsOfficialSpec.policy?.officialQuestionTextStored !== false || ieltsOfficialSpec.policy?.officialQuestionTextCopied !== false || ieltsOfficialSpec.policy?.generatedQuestionsOwnership !== "Project original") {
+  errors.push("IELTS official format snapshot violates the no-copy policy");
+}
+const officialPageIds = new Set();
+for (const page of ieltsOfficialSpec.pages || []) {
+  if (!page.id || officialPageIds.has(page.id) || !page.url?.startsWith("https://ielts.org/") || !/^[a-f0-9]{64}$/.test(page.contentSha256 || "") || !page.title || !page.description || !page.facts) {
+    errors.push(`IELTS official format page metadata is invalid: ${page.id}`);
+  }
+  officialPageIds.add(page.id);
 }
 const expectedHandbookTitles = [
   "导论：清晰思考的地图", "逻辑基础：论证的解剖学", "谬误大全：论证出错的全部方式", "论证分析与建构",

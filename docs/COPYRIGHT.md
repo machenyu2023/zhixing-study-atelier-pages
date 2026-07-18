@@ -6,6 +6,10 @@
 
 `data/question-banks/open-practice-bank.json` 由 `scripts/generate-open-bank.mjs` 确定性生成。题目带有稳定 ID、`source` 和 `license` 字段，便于审计、修订和重新生成。
 
+`data/question-banks/ielts-original-bank.json` 由 `scripts/generate-ielts-bank.mjs` 确定性生成。其中的阅读文章、听力 transcript、写作任务、语言题、题干、选项、答案和解析均为项目原创，仅借鉴 IELTS 官方公开说明中的考试结构、题型名称、时间和字数要求。每道题均设置 `referenceOnly: true` 和 `officialQuestionTextCopied: false`，官方链接不是题目正文的来源，也不表示 IELTS 官方认可本项目。
+
+`data/sources/ielts-official-spec.json` 只保存官方说明页的 URL、标题、摘要、内容哈希和结构化考试事实。它不保存官方样题正文。运行 `scripts/sync-ielts-official-sources.mjs` 时不得扩展为下载、复制或重新分发官方试卷。
+
 ## 用户提供的学习材料
 
 “教材”页面使用 `data/curriculum/curriculum-source.json`，忠实保存用户提供的《逻辑 · 论证 · 思考 — 系统学习手册》13 章正文，以及《逻辑 · 写作 · 思考 — 每日训练习题册》的使用指南和六卷正文。网站只增加目录导航、进度记录、作答输入框和折叠答案等交互，不以摘要或改写文本替代教材正文。
