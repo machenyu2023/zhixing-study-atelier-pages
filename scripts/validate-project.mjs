@@ -14,7 +14,8 @@ const allQuestions = [...coreQuestions, ...workbookQuestions];
 const exampleBank = JSON.parse(await readFile(new URL("data/question-banks/example-bank.json", root), "utf8"));
 const generatedBank = JSON.parse(await readFile(new URL("data/question-banks/open-practice-bank.json", root), "utf8"));
 const ieltsOriginalBank = JSON.parse(await readFile(new URL("data/question-banks/ielts-original-bank.json", root), "utf8"));
-allQuestions.push(...generatedBank.questions, ...ieltsOriginalBank.questions);
+const advancedMathBank = JSON.parse(await readFile(new URL("data/question-banks/advanced-math-solution-bank.json", root), "utf8"));
+allQuestions.push(...generatedBank.questions, ...ieltsOriginalBank.questions, ...advancedMathBank.questions);
 
 const errors = [];
 const ids = new Set();
@@ -41,7 +42,7 @@ const generatedTypeCounts = Object.fromEntries(["choice", "fill", "open"].map(ty
 for (const [type, expected] of Object.entries({ choice: 475, fill: 675, open: 75 })) {
   if (generatedTypeCounts[type] !== expected) errors.push(`Expected ${expected} generated ${type} questions, found ${generatedTypeCounts[type]}`);
 }
-if (allQuestions.length !== 1580) errors.push(`Expected 1580 total questions, found ${allQuestions.length}`);
+if (allQuestions.length !== 1980) errors.push(`Expected 1980 total questions, found ${allQuestions.length}`);
 const generatedLogic = generatedBank.questions.filter(question => question.subject === "logic");
 if (generatedLogic.length !== 420) errors.push(`Expected 420 generated logic questions, found ${generatedLogic.length}`);
 const totalLogic = allQuestions.filter(question => question.subject === "logic").length;
@@ -125,6 +126,34 @@ for (const question of ieltsOriginalBank.questions) {
 }
 const totalIelts = allQuestions.filter(question => question.subject === "ielts").length;
 if (totalIelts !== 425) errors.push(`Expected 425 total IELTS questions, found ${totalIelts}`);
+if (advancedMathBank.schemaVersion !== 1 || advancedMathBank.bank?.id !== "advanced-math-solutions-2026" || advancedMathBank.questions.length !== 400) {
+  errors.push("Expected the solution-rich advanced mathematics bank with 400 questions");
+}
+const advancedMathTypeCounts = Object.fromEntries(["choice", "fill", "open"].map(type => [type, advancedMathBank.questions.filter(question => question.type === type).length]));
+for (const [type, expected] of Object.entries({ choice: 160, fill: 160, open: 80 })) {
+  if (advancedMathTypeCounts[type] !== expected) errors.push(`Expected ${expected} solution-rich math ${type} questions, found ${advancedMathTypeCounts[type]}`);
+}
+const advancedMathPrompts = new Set();
+for (const domain of ["优化", "矩阵论", "随机过程", "高等概率论"]) {
+  const count = advancedMathBank.questions.filter(question => question.topic.startsWith(domain)).length;
+  if (count !== 100) errors.push(`Expected 100 solution-rich ${domain} questions, found ${count}`);
+}
+for (const question of advancedMathBank.questions) {
+  if (advancedMathPrompts.has(question.question)) errors.push(`Solution-rich math bank has a duplicate prompt: ${question.id}`);
+  advancedMathPrompts.add(question.question);
+  if (question.subject !== "math" || question.qualityTier !== "solution-rich" || !question.referenceAnswer || !Array.isArray(question.solutionSteps) || question.solutionSteps.length < 2 || !question.source || !question.license) {
+    errors.push(`Solution-rich math question lacks answer metadata: ${question.id}`);
+  }
+  const mathematicalText = [question.question, question.referenceAnswer, question.explanation, ...(question.solutionSteps || []), ...(question.options || [])].join(" ");
+  if (/--|\+-|-\+|×-/.test(mathematicalText)) errors.push(`Solution-rich math question has malformed signed expression: ${question.id}`);
+  if (question.type === "choice" && (question.options.length !== 4 || new Set(question.options).size !== 4 || question.answer < 0 || question.answer >= question.options.length)) {
+    errors.push(`Solution-rich math choice is invalid: ${question.id}`);
+  }
+  if (question.type === "fill" && (!question.answers.length || question.answers.some(answer => !String(answer).trim()))) errors.push(`Solution-rich math fill is invalid: ${question.id}`);
+  if (question.type === "open" && (question.checkpoints.length < 4 || question.minimumResponseUnits > 5)) errors.push(`Solution-rich math proof problem is invalid: ${question.id}`);
+}
+const totalMath = allQuestions.filter(question => question.subject === "math").length;
+if (totalMath !== 1044) errors.push(`Expected 1044 total mathematics questions, found ${totalMath}`);
 if (ieltsOfficialSpec.schemaVersion !== 1 || ieltsOfficialSpec.authority !== "IELTS official website" || ieltsOfficialSpec.pages?.length !== 5) {
   errors.push("IELTS official format snapshot is incomplete");
 }

@@ -15,7 +15,8 @@ const SCORE_DIMENSIONS = [
 
 const BUNDLED_BANK_URLS = [
   "data/question-banks/open-practice-bank.json",
-  "data/question-banks/ielts-original-bank.json"
+  "data/question-banks/ielts-original-bank.json",
+  "data/question-banks/advanced-math-solution-bank.json"
 ];
 const CURRICULUM_URL = "data/curriculum/curriculum-source.json";
 const VOLUME_NUMERALS = ["一", "二", "三", "四", "五", "六"];
@@ -523,6 +524,15 @@ function startPractice(subject, specificId) {
   if (specificId) {
     const selected = questions.find(question => question.id === specificId);
     practiceQueue = selected ? [selected] : [];
+  } else if (subject === "math") {
+    const mathQuestions = questions.filter(question => question.subject === "math");
+    const solutionRich = shuffle(mathQuestions.filter(question => question.qualityTier === "solution-rich"));
+    const foundation = shuffle(mathQuestions.filter(question => question.qualityTier !== "solution-rich"));
+    practiceQueue = shuffle([...solutionRich.slice(0, 4), ...foundation.slice(0, 1)]);
+    if (practiceQueue.length < 5) {
+      const selectedIds = new Set(practiceQueue.map(question => question.id));
+      practiceQueue.push(...shuffle(mathQuestions.filter(question => !selectedIds.has(question.id))).slice(0, 5 - practiceQueue.length));
+    }
   } else {
     practiceQueue = shuffle(subject === "all" ? questions : questions.filter(question => question.subject === subject)).slice(0, 5);
   }
@@ -546,7 +556,17 @@ function renderQuestionPassage(question) {
     : question.taskType?.includes("Writing")
       ? "TASK INFORMATION"
       : "READING PASSAGE";
-  return `<section class="reading-passage"><span>${label}</span><p>${escapeHtml(question.passage)}</p></section>`;
+  const content = label === "TASK INFORMATION" ? renderWritingTaskInformation(question.passage) : `<p>${escapeHtml(question.passage)}</p>`;
+  return `<section class="reading-passage ${label === "TASK INFORMATION" ? "task-information" : ""}"><span>${label}</span>${content}</section>`;
+}
+
+function renderWritingTaskInformation(passage) {
+  const rows = String(passage).split("\n").map(line => line.split("|").map(cell => cell.trim()));
+  if (rows.length < 2 || rows.some(row => row.length !== rows[0].length || row.length < 2)) {
+    return `<p>${escapeHtml(passage)}</p>`;
+  }
+  const [head, ...body] = rows;
+  return `<div class="task-table-wrap"><table><thead><tr>${head.map(cell => `<th>${escapeHtml(cell)}</th>`).join("")}</tr></thead><tbody>${body.map(row => `<tr>${row.map((cell, index) => index === 0 ? `<th>${escapeHtml(cell)}</th>` : `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 
 function renderQuestionAttribution(question) {
@@ -566,6 +586,20 @@ function renderQuestionAttribution(question) {
     ? "本题为项目原创；官方链接仅用于参考题型结构，未复制或改写官方样题正文。"
     : "请根据来源和许可说明核对题目使用范围。";
   return `<aside class="question-attribution"><strong>来源与版权</strong><span>${originalNotice}</span>${sourceLink}<small>${escapeHtml(question.source || "个人题库")}</small></aside>`;
+}
+
+function renderStandardSolution(question) {
+  if (!question.referenceAnswer) return "";
+  const steps = Array.isArray(question.solutionSteps) && question.solutionSteps.length
+    ? `<ol>${question.solutionSteps.map(step => `<li>${escapeHtml(step)}</li>`).join("")}</ol>`
+    : "";
+  return `<details class="standard-solution" open><summary><i data-lucide="book-open-check"></i>标准参考答案</summary><div><strong>${escapeHtml(question.referenceAnswer)}</strong>${steps}</div></details>`;
+}
+
+function renderAnswerFeedback(question) {
+  return question.referenceAnswer
+    ? renderStandardSolution(question)
+    : `<p>${escapeHtml(question.explanation)}</p>`;
 }
 
 function renderQuestion() {
@@ -641,7 +675,7 @@ function submitFillAnswer(question) {
   input.disabled = true;
   input.classList.add(correct ? "correct" : "incorrect");
   const reference = question.answers[0];
-  $("#explanation-slot").innerHTML = `<div class="explanation ${correct ? "" : "incorrect"}"><strong>${correct ? "回答正确" : `参考答案：${escapeHtml(reference)}`}</strong><p>${escapeHtml(question.explanation)}</p>${renderQuestionAttribution(question)}</div>`;
+  $("#explanation-slot").innerHTML = `<div class="explanation ${correct ? "" : "incorrect"}"><strong>${correct ? "回答正确" : `参考答案：${escapeHtml(reference)}`}</strong>${renderAnswerFeedback(question)}${renderQuestionAttribution(question)}</div>`;
   const submit = $("#submit-answer");
   submit.disabled = false;
   submit.innerHTML = practiceIndex < practiceQueue.length - 1 ? '下一题<i data-lucide="arrow-right"></i>' : '完成本组<i data-lucide="check"></i>';
@@ -692,7 +726,7 @@ function submitAnswer() {
     if (index === question.answer) button.classList.add("correct");
     if (index === selectedAnswer && !correct) button.classList.add("incorrect");
   });
-  $("#explanation-slot").innerHTML = `<div class="explanation ${correct ? "" : "incorrect"}"><strong>${correct ? "回答正确" : "这次没有答对"}</strong><p>${escapeHtml(question.explanation)}</p>${renderQuestionAttribution(question)}</div>`;
+  $("#explanation-slot").innerHTML = `<div class="explanation ${correct ? "" : "incorrect"}"><strong>${correct ? "回答正确" : "这次没有答对"}</strong>${renderAnswerFeedback(question)}${renderQuestionAttribution(question)}</div>`;
   const submit = $("#submit-answer");
   submit.disabled = false;
   submit.innerHTML = practiceIndex < practiceQueue.length - 1 ? '下一题<i data-lucide="arrow-right"></i>' : '完成本组<i data-lucide="check"></i>';
@@ -702,8 +736,9 @@ function submitAnswer() {
 function renderOpenQuestion(question) {
   const percent = (practiceIndex / practiceQueue.length) * 100;
   const saved = state.openResponses[question.id]?.content || "";
+  const writingQuestionClass = question.taskType?.includes("Writing") ? " writing-question-paper" : "";
   $("#practice-stage").innerHTML = `<div class="practice-progress"><span>${practiceIndex + 1} / ${practiceQueue.length}</span><div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div><span>${SUBJECTS[question.subject].name} · ${question.taskType}</span></div>
-    <div class="quiz-paper open-paper">
+    <div class="quiz-paper open-paper${writingQuestionClass}">
       <div class="quiz-meta"><span style="color:${SUBJECTS[question.subject].color}">${question.taskType.toUpperCase()} / ${escapeHtml(question.topic)}</span><button type="button" id="flag-question" class="${state.flaggedIds.includes(question.id) ? "active" : ""}" title="标记题目" aria-label="标记题目"><i data-lucide="bookmark"></i></button></div>
       ${renderQuestionPassage(question)}
       <div class="quiz-question">${escapeHtml(question.question)}</div>
@@ -745,8 +780,9 @@ function submitOpenAnswer(question) {
   }
   const editor = $("#open-response");
   const content = editor.value.trim();
-  if (countTextUnits(content) < 20) {
-    showToast("再展开一点，至少写出一个判断和一条理由");
+  const minimumResponseUnits = Number.isFinite(question.minimumResponseUnits) ? question.minimumResponseUnits : 20;
+  if (countTextUnits(content) < minimumResponseUnits) {
+    showToast(`再展开一点，本题至少需要 ${minimumResponseUnits} 个有效文本单位`);
     return;
   }
   const now = new Date().toISOString();
@@ -769,6 +805,7 @@ function renderOpenReview(question, content) {
   $("#open-review-slot").innerHTML = `<section class="open-review">
     <div><span>SELF REVIEW</span><h3>先检查判断过程，再看表达。</h3></div>
     <ul>${question.checkpoints.map(item => `<li><i data-lucide="circle"></i><span>${escapeHtml(item)}</span></li>`).join("")}</ul>
+    ${renderStandardSolution(question)}
     <div class="self-score-panel">
       <div class="self-score-heading"><strong>五维自评</strong><span id="self-score-total">10 / 20</span></div>
       ${SCORE_DIMENSIONS.map(dimension => `<label class="score-control"><span>${dimension.label}</span><input type="range" min="0" max="4" step="1" value="2" data-score-dimension="${dimension.key}"/><output>2</output></label>`).join("")}

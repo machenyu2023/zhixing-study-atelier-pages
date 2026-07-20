@@ -8,6 +8,8 @@
 
 `data/question-banks/ielts-original-bank.json` 由 `scripts/generate-ielts-bank.mjs` 确定性生成。其中的阅读文章、听力 transcript、写作任务、语言题、题干、选项、答案和解析均为项目原创，仅借鉴 IELTS 官方公开说明中的考试结构、题型名称、时间和字数要求。每道题均设置 `referenceOnly: true` 和 `officialQuestionTextCopied: false`，官方链接不是题目正文的来源，也不表示 IELTS 官方认可本项目。
 
+`data/question-banks/advanced-math-solution-bank.json` 由 `scripts/generate-advanced-math-bank.mjs` 确定性生成。400 道题及其标准答案、分步推导和评分检查点均为项目原创；公式采用通用数学定义与定理，不复制教材、试卷或商业题库的具体题面。
+
 `data/sources/ielts-official-spec.json` 只保存官方说明页的 URL、标题、摘要、内容哈希和结构化考试事实。它不保存官方样题正文。运行 `scripts/sync-ielts-official-sources.mjs` 时不得扩展为下载、复制或重新分发官方试卷。
 
 ## 用户提供的学习材料
