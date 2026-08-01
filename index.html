@@ -250,7 +250,8 @@
     <p>你的练习记录、错题与草稿保存在当前浏览器的 IndexedDB 中。可以导出备份，再在这台设备上长期使用。</p>
     <div class="data-actions">
       <button class="data-action" id="export-data" type="button"><span><i data-lucide="download"></i></span><b>导出学习数据</b><small>下载 JSON 备份文件</small></button>
-      <button class="data-action" id="export-ai-prompts" type="button"><span><i data-lucide="file-down"></i></span><b>导出 AI 阅卷 Prompt</b><small>汇总已完成的开放题作答</small></button>
+      <button class="data-action" id="export-latest-exam" type="button"><span><i data-lucide="notebook-tabs"></i></span><b>导出最近一套答卷</b><small>题目、作答与答案整理为 Markdown</small></button>
+      <button class="data-action" id="export-ai-prompts" type="button"><span><i data-lucide="file-down"></i></span><b>导出开放题汇总</b><small>汇总历史开放题作答 Prompt</small></button>
       <button class="data-action" id="open-copyright" type="button"><span><i data-lucide="copyright"></i></span><b>版权与题目来源</b><small>查看使用边界与来源说明</small></button>
       <button class="data-action danger" id="reset-data" type="button"><span><i data-lucide="trash-2"></i></span><b>清空全部数据</b><small>此操作无法撤销</small></button>
     </div>
@@ -276,6 +277,7 @@
   <script src="storage.js"></script>
   <script src="workbook-bank.js"></script>
   <script src="curriculum-renderer.js"></script>
+  <script src="exam-export.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

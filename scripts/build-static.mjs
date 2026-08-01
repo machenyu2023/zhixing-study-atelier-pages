@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = new URL("../", import.meta.url);
 const dist = new URL("../dist/", import.meta.url);
-const assetFiles = ["styles.css", "app.js", "workbook-bank.js", "curriculum-renderer.js", "storage.js", "config.js"];
+const assetFiles = ["styles.css", "app.js", "exam-export.js", "workbook-bank.js", "curriculum-renderer.js", "storage.js", "config.js"];
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });

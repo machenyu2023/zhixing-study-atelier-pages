@@ -68,6 +68,7 @@ const DAILY_TASKS = [
 
 const DEFAULT_STATE = {
   attempts: [], wrongIds: [], masteredIds: [], flaggedIds: [], customQuestions: [],
+  practiceSessions: [],
   completedTasks: [],
   sourceCompletedChapters: [], sourceCompletedVolumes: [], sourceWorkbookAnswers: {},
   sourceCurriculumMode: "handbook", sourceCurriculumSelected: { handbook: "handbook-1", workbook: "workbook-intro" },
@@ -87,6 +88,7 @@ let practiceQueue = [];
 let practiceIndex = 0;
 let selectedAnswer = null;
 let answerSubmitted = false;
+let activePracticeSession = null;
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -110,6 +112,7 @@ async function loadState() {
     ...DEFAULT_STATE,
     ...loaded,
     openResponses: loaded.openResponses || {},
+    practiceSessions: Array.isArray(loaded.practiceSessions) ? loaded.practiceSessions : [],
     importedBanks: loaded.importedBanks || [],
     sourceCompletedChapters: Array.isArray(loaded.sourceCompletedChapters) ? loaded.sourceCompletedChapters : [],
     sourceCompletedVolumes: Array.isArray(loaded.sourceCompletedVolumes) ? loaded.sourceCompletedVolumes : [],
@@ -235,9 +238,10 @@ function bindActions() {
     $("#draft-status").innerHTML = '<i data-lucide="cloud-off"></i>有未保存的修改';
     refreshIcons();
   });
-  $("#open-data-menu").addEventListener("click", () => $("#data-modal").showModal());
+  $("#open-data-menu").addEventListener("click", openDataModal);
   $("#close-data-modal").addEventListener("click", () => $("#data-modal").close());
   $("#export-data").addEventListener("click", exportData);
+  $("#export-latest-exam").addEventListener("click", exportLatestPracticeSession);
   $("#export-ai-prompts").addEventListener("click", exportAllReviewPrompts);
   $("#open-copyright").addEventListener("click", () => {
     $("#data-modal").close();
@@ -476,6 +480,7 @@ function startCurriculumPractice(item) {
   practiceIndex = 0;
   selectedAnswer = null;
   answerSubmitted = false;
+  beginPracticeSession(`教材配套练习 · ${item.title}`);
   $("#practice-setup").classList.add("hidden");
   $("#practice-stage").classList.remove("hidden");
   navigate("practice");
@@ -543,6 +548,10 @@ function startPractice(subject, specificId) {
   practiceIndex = 0;
   selectedAnswer = null;
   answerSubmitted = false;
+  const sessionSubject = specificId
+    ? `${SUBJECTS[practiceQueue[0].subject].name}单题练习`
+    : subject === "all" ? "混合练习" : `${SUBJECTS[subject].name}练习`;
+  beginPracticeSession(`${sessionSubject} · ${practiceQueue.length} 题`);
   $("#practice-setup").classList.add("hidden");
   $("#practice-stage").classList.remove("hidden");
   navigate("practice");
@@ -624,7 +633,7 @@ function renderQuestion() {
     </div>`;
   $$('[data-answer]').forEach(button => button.addEventListener("click", () => selectOption(Number(button.dataset.answer))));
   $("#submit-answer").addEventListener("click", submitAnswer);
-  $("#quit-practice").addEventListener("click", endPractice);
+  $("#quit-practice").addEventListener("click", () => endPractice(false));
   $("#flag-question").addEventListener("click", () => toggleFlag(question.id));
   refreshIcons();
 }
@@ -652,7 +661,7 @@ function renderFillQuestion(question) {
     }
   });
   $("#submit-answer").addEventListener("click", () => submitFillAnswer(question));
-  $("#quit-practice").addEventListener("click", endPractice);
+  $("#quit-practice").addEventListener("click", () => endPractice(false));
   $("#flag-question").addEventListener("click", () => toggleFlag(question.id));
   input.focus();
   refreshIcons();
@@ -667,7 +676,7 @@ function submitFillAnswer(question) {
   if (!submitted) return;
   const correct = isAcceptedFillAnswer(submitted, question);
   answerSubmitted = true;
-  state.attempts.push({ id: newAttemptId(), questionId: question.id, subject: question.subject, correct, mode: "fill", points: correct ? 1 : 0, maxPoints: 1, scoreSource: "answer-key", answer: submitted, date: new Date().toISOString() });
+  state.attempts.push({ id: newAttemptId(), sessionId: activePracticeSession?.id || null, questionId: question.id, subject: question.subject, correct, mode: "fill", points: correct ? 1 : 0, maxPoints: 1, scoreSource: "answer-key", answer: submitted, date: new Date().toISOString() });
   if (correct) state.wrongIds = state.wrongIds.filter(id => id !== question.id);
   else if (!state.wrongIds.includes(question.id)) state.wrongIds.push(question.id);
   saveState();
@@ -716,7 +725,7 @@ function submitAnswer() {
   if (selectedAnswer === null) return;
   answerSubmitted = true;
   const correct = selectedAnswer === question.answer;
-  state.attempts.push({ id: newAttemptId(), questionId: question.id, subject: question.subject, correct, mode: "choice", points: correct ? 1 : 0, maxPoints: 1, scoreSource: "answer-key", date: new Date().toISOString() });
+  state.attempts.push({ id: newAttemptId(), sessionId: activePracticeSession?.id || null, questionId: question.id, subject: question.subject, correct, mode: "choice", points: correct ? 1 : 0, maxPoints: 1, scoreSource: "answer-key", selectedAnswer, selectedOption: question.options[selectedAnswer], date: new Date().toISOString() });
   if (correct) state.wrongIds = state.wrongIds.filter(id => id !== question.id);
   else if (!state.wrongIds.includes(question.id)) state.wrongIds.push(question.id);
   saveState();
@@ -755,7 +764,7 @@ function renderOpenQuestion(question) {
   });
   $("#save-open-draft").addEventListener("click", () => saveOpenDraft(question));
   $("#complete-open").addEventListener("click", () => submitOpenAnswer(question));
-  $("#quit-practice").addEventListener("click", endPractice);
+  $("#quit-practice").addEventListener("click", () => endPractice(false));
   $("#flag-question").addEventListener("click", () => toggleFlag(question.id));
   refreshIcons();
 }
@@ -787,7 +796,7 @@ function submitOpenAnswer(question) {
   }
   const now = new Date().toISOString();
   state.openResponses[question.id] = { content, savedAt: now, completedAt: now };
-  state.attempts.push({ id: newAttemptId(), questionId: question.id, subject: question.subject, correct: null, mode: "open", points: null, maxPoints: null, scoreSource: null, date: now });
+  state.attempts.push({ id: newAttemptId(), sessionId: activePracticeSession?.id || null, questionId: question.id, subject: question.subject, correct: null, mode: "open", points: null, maxPoints: null, scoreSource: null, answer: content, date: now });
   saveState();
   answerSubmitted = true;
   editor.disabled = true;
@@ -901,6 +910,14 @@ function getAIEndpoint() {
   return ["127.0.0.1", "localhost"].includes(location.hostname) ? "/api/grade" : "";
 }
 
+function beginPracticeSession(title) {
+  activePracticeSession = {
+    id: newAttemptId(),
+    title,
+    startedAt: new Date().toISOString()
+  };
+}
+
 function advancePractice() {
   if (practiceIndex < practiceQueue.length - 1) {
     practiceIndex += 1;
@@ -950,11 +967,93 @@ function exportAllReviewPrompts() {
   showToast(`已导出 ${entries.length} 份开放题作答`);
 }
 
+function finalizePracticeSession(completed) {
+  if (!activePracticeSession) return null;
+  const attempts = state.attempts.filter(attempt => attempt.sessionId === activePracticeSession.id);
+  if (!attempts.length && !completed) {
+    activePracticeSession = null;
+    return null;
+  }
+  const snapshot = ExamExport.createSessionSnapshot({
+    ...activePracticeSession,
+    completedAt: new Date().toISOString(),
+    status: completed ? "completed" : "ended",
+    questions: practiceQueue,
+    attempts,
+    openResponses: state.openResponses
+  });
+  state.practiceSessions = [snapshot, ...state.practiceSessions.filter(session => session.id !== snapshot.id)].slice(0, 30);
+  activePracticeSession = null;
+  saveState();
+  return snapshot;
+}
+
+function renderPracticeResult(session) {
+  const summary = ExamExport.sessionSummary(session);
+  const completed = session.status === "completed";
+  const objectiveResult = summary.objective ? `${summary.correct} / ${summary.objective}` : "暂无";
+  const compositeResult = summary.average === null ? "待阅卷" : `${summary.average}`;
+  $("#practice-stage").innerHTML = `<section class="practice-result">
+    <div class="practice-result-heading">
+      <span class="practice-result-icon"><i data-lucide="${completed ? "circle-check-big" : "circle-stop"}"></i></span>
+      <div><span class="section-kicker">${completed ? "SESSION COMPLETE" : "SESSION ENDED"}</span><h2>${completed ? "本组已完成" : "本组已结束"}</h2><p>${escapeHtml(session.title)}</p></div>
+    </div>
+    <div class="practice-result-metrics">
+      <div><strong>${summary.answered}<small> / ${session.items.length}</small></strong><span>已作答</span></div>
+      <div><strong>${objectiveResult}</strong><span>客观题正确</span></div>
+      <div><strong>${compositeResult}${summary.average === null ? "" : "<small> / 100</small>"}</strong><span>网站已有评分</span></div>
+    </div>
+    <div class="practice-export-note"><i data-lucide="file-text"></i><div><strong>答卷已整理为 AI 可读格式</strong><p>文件包含整套题目、你的原始答案、标准答案、网站初判与开放题评分依据。AI 会被要求逐题独立复核。</p></div></div>
+    <div class="practice-result-actions"><button class="primary-button" id="download-practice-session" type="button"><i data-lucide="download"></i>下载 AI 阅卷答卷</button><button class="secondary-button" id="return-practice-setup" type="button"><i data-lucide="arrow-left"></i>返回练习选择</button></div>
+  </section>`;
+  $("#download-practice-session").addEventListener("click", () => exportPracticeSession(session.id));
+  $("#return-practice-setup").addEventListener("click", returnToPracticeSetup);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  refreshIcons();
+}
+
 function endPractice(completed = false) {
-  $("#practice-stage").classList.add("hidden");
-  $("#practice-setup").classList.remove("hidden");
-  if (completed) showToast("本组练习已完成，记录已经保存");
+  const session = finalizePracticeSession(completed === true);
+  if (session) {
+    $("#practice-setup").classList.add("hidden");
+    $("#practice-stage").classList.remove("hidden");
+    renderPracticeResult(session);
+    showToast(completed === true ? "本组练习已完成，可以下载答卷" : "本组记录已保存，可以下载未完成答卷");
+  } else {
+    returnToPracticeSetup();
+  }
   renderAll();
+}
+
+function returnToPracticeSetup() {
+  $("#practice-stage").classList.add("hidden");
+  $("#practice-stage").innerHTML = "";
+  $("#practice-setup").classList.remove("hidden");
+}
+
+function exportPracticeSession(sessionId) {
+  const session = state.practiceSessions.find(item => item.id === sessionId);
+  if (!session) {
+    showToast("没有找到这套答卷");
+    return;
+  }
+  const markdown = ExamExport.buildMarkdown(session);
+  downloadText(ExamExport.filenameForSession(session), `\uFEFF${markdown}`, "text/markdown;charset=utf-8");
+  showToast(`已下载 ${session.items.length} 道题的 AI 阅卷答卷`);
+}
+
+function exportLatestPracticeSession() {
+  const latest = state.practiceSessions[0];
+  if (!latest) {
+    showToast("完成一组练习后才能导出整套答卷");
+    return;
+  }
+  exportPracticeSession(latest.id);
+}
+
+function openDataModal() {
+  $("#export-latest-exam").disabled = !state.practiceSessions.length;
+  $("#data-modal").showModal();
 }
 
 function toggleFlag(id) {
@@ -1190,10 +1289,12 @@ async function resetData() {
   state = {
     ...DEFAULT_STATE,
     attempts: [], wrongIds: [], masteredIds: [], flaggedIds: [], customQuestions: [], completedTasks: [],
+    practiceSessions: [],
     sourceCompletedChapters: [], sourceCompletedVolumes: [], sourceWorkbookAnswers: {},
     sourceCurriculumSelected: { ...DEFAULT_STATE.sourceCurriculumSelected },
     writingDrafts: {}, openResponses: {}, importedBanks: [], rubric: {}
   };
+  activePracticeSession = null;
   await StudyStorage.clear();
   await StudyStorage.save(state);
   $("#data-modal").close(); renderAll(); showToast("本地学习数据已清空");
