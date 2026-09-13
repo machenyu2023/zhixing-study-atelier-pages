@@ -72,7 +72,8 @@ const DEFAULT_STATE = {
   completedTasks: [],
   sourceCompletedChapters: [], sourceCompletedVolumes: [], sourceWorkbookAnswers: {},
   sourceCurriculumMode: "handbook", sourceCurriculumSelected: { handbook: "handbook-1", workbook: "workbook-intro" },
-  writingDrafts: {}, openResponses: {}, importedBanks: [], rubric: {}, selectedPrompt: "w1"
+  writingDrafts: {}, openResponses: {}, importedBanks: [], rubric: {}, selectedPrompt: "w1",
+  remoteSensing: { entries: [], records: {} }
 };
 
 let state = { ...DEFAULT_STATE };
@@ -179,6 +180,14 @@ function saveState() {
 async function init() {
   state = await loadState();
   await Promise.all([loadBundledQuestionBanks(), loadCurriculum()]);
+  RemoteSensing.init({
+    root: $("#remote-sensing-root"),
+    getState: () => state.remoteSensing,
+    setState: value => { state.remoteSensing = value; },
+    persist: () => StudyStorage.save(state),
+    toast: showToast,
+    download: downloadText
+  });
   setDate();
   bindNavigation();
   bindActions();
@@ -273,9 +282,10 @@ function showView(view) {
   currentView = view;
   $$(".view").forEach(section => section.classList.toggle("active", section.id === `view-${view}`));
   $$(".nav-item").forEach(button => button.classList.toggle("active", button.dataset.view === view));
-  const titles = { today: "今日学习", learn: "学习教材", library: "我的题库", practice: "专注练习", review: "错题复盘", writing: "写作室", analytics: "学习数据" };
+  const titles = { today: "今日学习", learn: "学习教材", "remote-sensing": "遥感物理知识库", library: "我的题库", practice: "专注练习", review: "错题复盘", writing: "写作室", analytics: "学习数据" };
   $("#view-title").textContent = titles[view];
   if (view === "learn") renderCurriculum();
+  if (view === "remote-sensing") RemoteSensing.render();
   if (view === "library") renderLibrary();
   if (view === "review") renderReview();
   if (view === "analytics") renderAnalytics();
@@ -1285,18 +1295,20 @@ function exportData() {
 }
 
 async function resetData() {
-  if (!confirm("确定清空全部练习记录、错题和草稿吗？此操作无法撤销。")) return;
+  if (!confirm("确定清空全部练习记录、错题、草稿，以及个人遥感条目、笔记和学习状态吗？此操作无法撤销。")) return;
   state = {
     ...DEFAULT_STATE,
     attempts: [], wrongIds: [], masteredIds: [], flaggedIds: [], customQuestions: [], completedTasks: [],
     practiceSessions: [],
     sourceCompletedChapters: [], sourceCompletedVolumes: [], sourceWorkbookAnswers: {},
     sourceCurriculumSelected: { ...DEFAULT_STATE.sourceCurriculumSelected },
-    writingDrafts: {}, openResponses: {}, importedBanks: [], rubric: {}
+    writingDrafts: {}, openResponses: {}, importedBanks: [], rubric: {},
+    remoteSensing: { entries: [], records: {} }
   };
   activePracticeSession = null;
   await StudyStorage.clear();
   await StudyStorage.save(state);
+  RemoteSensing.resetView();
   $("#data-modal").close(); renderAll(); showToast("本地学习数据已清空");
 }
 

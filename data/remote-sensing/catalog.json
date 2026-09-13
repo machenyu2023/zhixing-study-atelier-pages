@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 1,
+  "updated": "2026-09-12",
+  "fields": [
+    "概念",
+    "核心物理过程",
+    "核心公式",
+    "变量解释",
+    "直观理解",
+    "与其他知识的联系",
+    "遥感中的实际应用",
+    "典型卫星 / 传感器",
+    "推荐教材 / 论文 / ATBD",
+    "可进行的 Python 小实验"
+  ],
+  "sections": [
+    {
+      "id": "01",
+      "title": "遥感物理基础",
+      "description": "先弄清观测量、量纲与几何。",
+      "topics": [
+        "立体角",
+        "量纲与单位",
+        "观测几何",
+        "能量守恒"
+      ],
+      "prerequisites": []
+    },
+    {
+      "id": "02",
+      "title": "电磁辐射",
+      "description": "从电磁波到可测量的辐射量。",
+      "topics": [
+        "Radiance",
+        "Irradiance",
+        "光谱",
+        "极化"
+      ],
+      "prerequisites": [
+        "01"
+      ]
+    },
+    {
+      "id": "03",
+      "title": "辐射传输",
+      "description": "追踪能量在介质中的传播。",
+      "topics": [
+        "吸收与散射",
+        "光学厚度",
+        "透过率",
+        "辐射传输方程"
+      ],
+      "prerequisites": [
+        "01",
+        "02"
+      ]
+    },
+    {
+      "id": "04",
+      "title": "光学遥感",
+      "description": "连接地表反射与大气层顶信号。",
+      "topics": [
+        "TOA Radiance",
+        "TOA Reflectance",
+        "Surface Reflectance",
+        "大气校正"
+      ],
+      "prerequisites": [
+        "02",
+        "03"
+      ]
+    },
+    {
+      "id": "05",
+      "title": "几何光学与 BRDF",
+      "description": "理解目标为何从不同方向看起来不同。",
+      "topics": [
+        "几何光学",
+        "BRDF",
+        "反射因子",
+        "反照率"
+      ],
+      "prerequisites": [
+        "01",
+        "02",
+        "04"
+      ]
+    },
+    {
+      "id": "06",
+      "title": "热红外遥感",
+      "description": "由热辐射理解温度与发射率。",
+      "topics": [
+        "Planck 定律",
+        "亮温",
+        "地表温度 LST",
+        "发射率"
+      ],
+      "prerequisites": [
+        "02",
+        "03"
+      ]
+    },
+    {
+      "id": "07",
+      "title": "微波遥感",
+      "description": "从主动散射与被动发射理解微波观测。",
+      "topics": [
+        "主动与被动微波",
+        "SAR",
+        "后向散射",
+        "介电常数",
+        "极化"
+      ],
+      "prerequisites": [
+        "01",
+        "02",
+        "03"
+      ]
+    },
+    {
+      "id": "08",
+      "title": "土壤水分遥感",
+      "description": "把水分状态连接到介电与微波信号。",
+      "topics": [
+        "土壤介电模型",
+        "粗糙度",
+        "微波亮温",
+        "土壤水分反演"
+      ],
+      "prerequisites": [
+        "07",
+        "09"
+      ]
+    },
+    {
+      "id": "09",
+      "title": "植被与冠层遥感",
+      "description": "追踪电磁波与叶片、冠层的相互作用。",
+      "topics": [
+        "叶片光学",
+        "LAI",
+        "冠层结构",
+        "冠层辐射传输"
+      ],
+      "prerequisites": [
+        "03",
+        "04",
+        "05"
+      ]
+    },
+    {
+      "id": "10",
+      "title": "遥感前向模型",
+      "description": "给定地表与观测条件，预测传感器信号。",
+      "topics": [
+        "状态变量",
+        "模型耦合",
+        "传感器响应",
+        "灵敏度"
+      ],
+      "prerequisites": [
+        "03"
+      ]
+    },
+    {
+      "id": "11",
+      "title": "遥感反演",
+      "description": "从观测约束未知参数及其不确定性。",
+      "topics": [
+        "可辨识性",
+        "病态性",
+        "先验与正则化",
+        "贝叶斯反演"
+      ],
+      "prerequisites": [
+        "10"
+      ]
+    },
+    {
+      "id": "12",
+      "title": "卫星和传感器案例",
+      "description": "把物理过程、算法与具体产品连接起来。",
+      "topics": [
+        "测量与定标",
+        "波段响应",
+        "ATBD",
+        "质量标识"
+      ],
+      "prerequisites": [
+        "10",
+        "11"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "RS-02-001",
+      "section": "02",
+      "title": "辐射亮度与辐照度",
+      "aliases": "Radiance · Irradiance · 立体角",
+      "summary": "一个描述指定方向的辐射，一个汇总到达表面的辐射。先分清它们，才能读懂观测与传输方程。",
+      "status": "教学条目 · 待教材交叉核验",
+      "related": [
+        "RS-04-001",
+        "RS-06-001"
+      ],
+      "sources": [
+        "SRC-0001"
+      ],
+      "body": {
+        "概念": "辐射亮度（Radiance, L）是单位投影面积、单位立体角中的辐射功率；辐照度（Irradiance, E）是单位接收面积上的入射辐射功率。前者保留方向信息，后者对入射方向求和。",
+        "核心物理过程": "太阳或地物提供辐射 → 能量沿不同方向传播 → 表面接收，或由传感器在有限视场内接收。投影面积使斜向光束与表面的几何关系进入定义。",
+        "核心公式": "\\[L=\\frac{d^2\\Phi}{dA\\cos\\theta\\,d\\Omega},\\qquad E=\\int_{\\Omega^+}L_i(\\theta,\\phi)\\cos\\theta\\,d\\Omega\\]\n对于入射半球内处处相同的 L_i=L_0，可自行积分得到 E=πL_0。这个简化依赖各方向辐射亮度相同，不能用于任意角分布。",
+        "变量解释": "Φ：辐射通量，W；A：表面面积，m²；θ：光线与表面法线夹角，rad；φ：方位角，rad；Ω：立体角，sr；L：W·m⁻²·sr⁻¹；E：W·m⁻²。\n若按波长描述，Lλ、Eλ 还带每单位波长，例如 μm⁻¹；不能直接混用每米与每微米的数值。",
+        "直观理解": "用一个方向很窄的视窗看地物，关注的是该方向的 L；把整个入射半球对一块平面的贡献合起来，得到 E。积分中的 cosθ 给出斜入射的投影权重。",
+        "与其他知识的联系": "它是 BRDF、Planck 函数和辐射传输的共同语言。先区分方向积分与波段积分，再学习反射率和温度反演。",
+        "遥感中的实际应用": "光学与热红外成像仪经辐射定标后通常提供与通道辐射亮度相关的观测；从辐射量推到地表参数，还需要传输和传感器响应模型。",
+        "典型卫星 / 传感器": "可从 Landsat 光学陆地成像仪（Operational Land Imager, OLI）与热红外传感器（Thermal Infrared Sensor, TIRS）的定标定义继续学习；具体通道参数待查官方文档。",
+        "推荐教材 / 论文 / ATBD": "SRC-0001：NIST 的 Rendering 页面，支持方向辐射亮度、单位与 BRDF 积分联系。半球积分是本条目的教学推导；教材级定义与真实仪器响应仍待补充交叉核验。",
+        "可进行的 Python 小实验": "设计稿：令入射 L=L₀，使用 Python 对 θ∈[0,π/2]、φ∈[0,2π] 数值积分，比较结果与 πL₀；再限制光束角范围，观察 E 改变。验证网格收敛，不把此假设推广到所有天空辐射。"
+      }
+    },
+    {
+      "id": "RS-04-001",
+      "section": "04",
+      "title": "从 TOA 信号到地表反射率",
+      "aliases": "TOA Radiance · TOA Reflectance · Surface Reflectance · 大气校正",
+      "summary": "太阳照明归一化与大气校正解决不同问题，TOA 反射率仍包含大气影响。",
+      "status": "教学条目 · 产品说明已核验",
+      "related": [
+        "RS-02-001"
+      ],
+      "sources": [
+        "SRC-0002"
+      ],
+      "body": {
+        "概念": "大气层顶（Top of Atmosphere, TOA）辐射亮度描述进入传感器方向的辐射。TOA 反射率对该辐射按太阳照明归一化；地表反射率（Surface Reflectance, SR）需要进一步估计和校正大气影响。",
+        "核心物理过程": "太阳照明 → 地表反射 → 大气衰减与路径辐射 → 传感器接收。大气可削弱地表贡献，也可向视线添加散射辐射。",
+        "核心公式": "\\[L_{\\lambda,TOA}\\approx\\tau_{\\lambda,\\uparrow}\\frac{\\rho_\\lambda E_{\\lambda,s}}{\\pi}+L_{\\lambda,path}\\]\n这是教学用最小前向模型：假设朗伯、不透明地表，Eλ,s 是实际地表下行总辐照度；忽略热发射、邻近效应与地表—大气多次反射反馈，不是完整大气校正算法。",
+        "变量解释": "Lλ,TOA、Lλ,path：TOA 与路径光谱辐射亮度，W·m⁻²·sr⁻¹·μm⁻¹；τλ,↑：上行透过率，无量纲；ρλ：模型中的朗伯地表反射率，无量纲；Eλ,s：地表下行光谱辐照度，W·m⁻²·μm⁻¹。",
+        "直观理解": "观测既包含透过大气的地表贡献，也包含路径辐射；因此只看 TOA 的亮暗，不能唯一推断地表反射率。",
+        "与其他知识的联系": "BRDF 决定方向性反射，辐射传输决定大气项；反演需区分目标参数 ρ 与气溶胶、几何等干扰因素。",
+        "遥感中的实际应用": "USGS 的 Landsat Collection 2 SR 从 Level-1 和辅助信息生成。应结合质量标识使用，并按具体版本核对缩放因子。",
+        "典型卫星 / 传感器": "Landsat 8–9 的 LaSRC 与 Landsat 4–7 的 LEDAPS 采用不同输入及处理方法。它们各自建模，不能把两个算法视为同一个实现。",
+        "推荐教材 / 论文 / ATBD": "SRC-0002：USGS，Landsat Collection 2 Surface Reflectance；定位 Level-2 Surface Reflectance 与 Differences in Surface Reflectance Processing Algorithms。页面核验日期 2026-09-12。上式是自行组织的教学近似，不归称为 USGS 算法。",
+        "可进行的 Python 小实验": "设计稿：固定 Eλ,s 与 ρ，分别改变 τλ,↑、Lλ,path，计算 TOA 辐射；再故意用错误的透过率反演 ρ，量化偏差。先分析 τ→1、Lpath→0 极限。"
+      }
+    },
+    {
+      "id": "RS-06-001",
+      "section": "06",
+      "title": "Planck 定律与亮温",
+      "aliases": "Planck law · Blackbody · Brightness Temperature · Physical Temperature",
+      "summary": "温度决定黑体光谱；亮温是把观测辐射换算为黑体等效温度。",
+      "status": "教学条目 · 实验参考已核验",
+      "related": [
+        "RS-02-001"
+      ],
+      "sources": [
+        "SRC-0003"
+      ],
+      "body": {
+        "概念": "Planck 定律描述温度为 T 的理想黑体的光谱辐射亮度。亮温（Brightness Temperature, Tb）是在约定波长或通道下，产生同样辐射亮度的黑体温度；它不自动等于地表物理温度。",
+        "核心物理过程": "物质热运动 → 热辐射发射 → 地表发射率及环境反射影响 → 大气传播 → 通道观测。Planck 函数提供其中的黑体发射基准。",
+        "核心公式": "\\[B_\\lambda(T)=\\frac{2hc^2}{\\lambda^5}\\left[\\exp\\left(\\frac{hc}{\\lambda k_BT}\\right)-1\\right]^{-1}\\]\n黑体平衡热辐射、波长形式；λ 用米时输出每米的光谱辐射亮度。单色亮温由 Bλ(Tb)=Lλ 反解；实际宽波段必须采用通道响应或产品定标系数。",
+        "变量解释": "h：Planck 常数，6.62607015×10⁻³⁴ J·s；c：真空光速，299792458 m·s⁻¹；kB：Boltzmann 常数，1.380649×10⁻²³ J·K⁻¹；T：绝对温度，K；λ：波长，m。Bλ 的 SI 单位为 W·m⁻²·sr⁻¹·m⁻¹，转成每 μm 的数值需乘 10⁻⁶。",
+        "直观理解": "升温会提高固定波长上的黑体辐射亮度，并使波长形式的谱峰移向短波。实验中的黑体没有大气或发射率误差，因此不能直接当作真实地表。",
+        "与其他知识的联系": "联系发射率、亮温、地表温度（Land Surface Temperature, LST）与辐射传输；还应区分波长谱 Bλ 和频率谱 Bν，不能仅替换横轴而保持纵轴不变。",
+        "遥感中的实际应用": "热红外温度反演以发射定律为基础，同时要处理大气和发射率。不同参数可能产生相近观测，后续需学习可辨识性。",
+        "典型卫星 / 传感器": "Landsat TIRS 可用作后续案例；通道亮温转换请查对应产品文档，不直接将示意中心波长替代真实通道响应。",
+        "推荐教材 / 论文 / ATBD": "SRC-0003：University of Wisconsin–Madison CIMSS，Blackbody Radiation Lab，A–B 部分支持波长形式 Planck 曲线、单位和谱峰实验。下方是独立编写的 Python 与网页教学实现；尚未与卫星产品进行验证。",
+        "可进行的 Python 小实验": "已提供可下载的 Python Demo：仅使用标准库，输出 250、300、350 K 的 2–30 μm 黑体光谱 CSV，检查 10 μm 参考值与峰值位置。网页滑块可改变温度。参数范围用于教学，不代表传感器覆盖范围。"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "SRC-0001",
+      "title": "Computer Graphic Rendering of Material Surfaces — Discussion of Rendering",
+      "institution": "NIST",
+      "type": "官方技术文档",
+      "url": "https://math.nist.gov/~FHunt/appearance/render.html",
+      "location": "Discussion of Rendering，方向辐射亮度与积分关系",
+      "checked": "2026-09-12",
+      "scope": "已核验网页；支持方向性、单位和 BRDF 关系，不替代完整辐射度量教材。"
+    },
+    {
+      "id": "SRC-0002",
+      "title": "Landsat Collection 2 Surface Reflectance",
+      "institution": "USGS",
+      "type": "官方产品文档",
+      "url": "https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-reflectance",
+      "location": "Level-2 Surface Reflectance；Differences in Surface Reflectance Processing Algorithms",
+      "checked": "2026-09-12",
+      "scope": "已核验网页中产品定义与算法差异；未在本轮阅读全文所链接 ATBD。"
+    },
+    {
+      "id": "SRC-0003",
+      "title": "Lab 2 — Blackbody Radiation",
+      "institution": "UW–Madison CIMSS",
+      "type": "大学教学资料",
+      "url": "https://cimss.ssec.wisc.edu/wxwise/class/aos340/labs/lab2/lab2.html",
+      "location": "A) Planck curves — wavelength；B) Planck function maxima",
+      "checked": "2026-09-12",
+      "scope": "已核验教学网页的实验说明；本项目 Python 为独立实现，未复用其 Matlab 文件。"
+    }
+  ]
+}
