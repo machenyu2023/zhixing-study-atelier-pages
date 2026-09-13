@@ -206,7 +206,7 @@
       "body": {
         "概念": "能量守恒（Energy Conservation）要求进入、离开、吸收和储存的能量收支一致；测量层级则区分 DN、定标辐射量、TOA 信号和经过物理反演的 Level-2 参数。",
         "核心物理过程": "太阳或地表提供能量，目标吸收/反射/散射/发射，大气改变传播，传感器把到达信号转换为 DN，算法再从观测估计地表参数。每一级都有新的假设和误差。",
-        "核心公式": "\\[E_{in}=E_{ref}+E_{abs}+E_{trans},\\qquad y_{L1}=\\mathcal C(L_{sensor})+\\epsilon,\\qquad x_{L2}=\\mathcal R(y_{L1},u)\\]",
+        "核心公式": "\\[\\Phi_{\\rm in}=\\Phi_{\\rm ref}+\\Phi_{\\rm abs}+\\Phi_{\\rm trans}\\]\n各项是同一入射功率的分配，单位 W；不是完整地表热收支，后者还需发射、感热、潜热、传导和储热。\n\\[y_{L1}=\\mathcal C(L_{\\rm sensor})+\\epsilon,\\qquad x_{L2}=\\mathcal R(y_{L1},u)\\]\nC 表示定标关系，R 表示反演算子，u 是辅助信息。",
         "变量解释": "Ein、Eref、Eabs、Etrans 是入射、反射、吸收和透射能量；C 是定标算子；R 是反演/产品算法；u 是几何和辅助信息。",
         "直观理解": "DN 像秤上的刻度，Radiance 像校准后的重量，TOA 是大气层顶看到的信号，LST/LAI/土壤水分则是根据模型推断出的状态。",
         "与其他知识的联系": "连接辐射量、RTE、传感器定标、质量标识和反演不确定性，是阅读任何产品 ATBD 的总览框架。",
@@ -272,7 +272,7 @@
       "body": {
         "概念": "TOA 反射率是对传感器处辐射亮度按太阳外大气辐照度和太阳天顶角进行归一化的量；它仍包含大气和方向性影响。",
         "核心物理过程": "太阳辐照度随地日距离和太阳天顶角变化，地表和大气共同把入射能量散射到传感器方向；归一化只处理照明尺度，不会自动移除路径辐射。",
-        "核心公式": "\\[ρ'_{TOA}=\\frac{πL_{λ,TOA}d^2}{ESUN_λ\\cosθ_s}\\]\\n其中 d 是地日距离（天文单位）；Collection 2 产品通常直接提供元数据缩放系数，具体定义以传感器文档为准。",
+        "核心公式": "\\[\\rho'_\\lambda=M_\\rho Q_{\\rm cal}+A_\\rho,\\qquad \\rho_{\\lambda,\\rm TOA}=\\rho'_\\lambda/\\cos\\theta_s\\]\n撇号专指 Landsat Level-1 未修正太阳角的中间量；Mρ、Aρ 从 MTL 读取。一般亮度归一化为 ρTOA=πLλd²/(ESUNλ cosθs)，不要再把该结果标成未修正量。Level-2 SR 不应再次做太阳角修正。",
         "变量解释": "Lλ,TOA 是 TOA 光谱辐射亮度，ESUNλ 是太阳外大气光谱辐照度，θs 是太阳天顶角，d 是地日距离，ρ' 未必等于地表反射率。",
         "直观理解": "同一块地表在早晨和中午接收的太阳照明不同，TOA 反射率先把照明强度换算到共同尺度；但大气散射和观测方向仍然留在里面。",
         "与其他知识的联系": "连接 Radiance/Irradiance、观测几何、BRDF、Surface Reflectance 和 Landsat DN 定标。",
@@ -338,7 +338,7 @@
       "body": {
         "概念": "地表温度（Land Surface Temperature, LST）是地表热力学状态的估计；发射率（Emissivity, ε）描述实际表面相对于同温黑体的发射能力；亮温（Brightness Temperature, Tb）是把观测辐射反解成黑体等效温度。",
         "核心物理过程": "地表按 εBλ(T) 发射，同时反射环境辐射；辐射经过大气吸收、发射和散射，被有限波段传感器积分。LST 反演必须同时处理温度、发射率、透过率、路径辐射和通道响应。",
-        "核心公式": "\\[L_{sensor}=\\tau[\\varepsilon B_\\lambda(T)+(1-\\varepsilon)L_{down}]+L_{path}\\]\\n单色亮温满足 Bλ(Tb)=Lsensor；宽波段产品应使用响应函数积分。",
+        "核心公式": "\\[L_{\\lambda,\\rm TOA}=\\tau[\\varepsilon B_\\lambda(T_s)+(1-\\varepsilon)E_{\\lambda,\\downarrow}/\\pi]+L_{\\lambda,\\uparrow}\\]\n适用于不透明、近似朗伯表面，忽略热红外散射并采用局地热力学平衡。Eλ,down 是辐照度，除以 π 后才成为亮度；不能与方向性天空亮度混用。真实波段应进行响应积分。",
         "变量解释": "T 是物理温度 K，ε 是发射率，无量纲，τ 是大气透过率，Ldown 是下行环境辐射，Lpath 是路径辐射，Bλ 是 Planck 黑体谱辐射亮度。",
         "直观理解": "同样的亮温可能来自较热但低发射率的表面，也可能来自较冷但高发射率的表面；大气还会在传播途中改变信号。",
         "与其他知识的联系": "连接 Planck 定律、RTE、传感器波段响应、地表材料光谱和病态反演。发射率是 LST 反演中的关键 nuisance variable。",
@@ -930,7 +930,7 @@
       "institution": "NASA/JPL SMAP",
       "type": "官方 ATBD · 已定位待精读",
       "url": "https://smap.jpl.nasa.gov/system/internal_resources/details/original/522_L2_SM_SP_Release_Version3.pdf",
-      "location": "L 波段辐射计与 C 波段 Sentinel-1 雷达耦合；9 km 产品",
+      "location": "L 波段辐射计与 C 波段 Sentinel-1 雷达耦合；网格须按版本核对，SMAP 官方产品页将 L2_SM_SP 列为 3 km",
       "checked": "2026-09-13（已定位，待精读）",
       "scope": "候选官方 ATBD；计划支持 07、08、10、11。"
     },

@@ -1,5 +1,9 @@
 # 遥感物理个人学习资料库
 
+新增「专题阅读」入口：十二篇连续正文存于 `data/remote-sensing/research.json`，运行时与 `catalog.json` 的稳定条目 ID 关联。渠道及读取范围见 [本轮检索与证据](资料/本轮检索与证据.md)，获取记录位于 `data/remote-sensing/source-retrieval-log.json`。原十项字段继续作为速查与个人条目格式，不再用通用串接生成这些专题。
+
+数值例题运行：`python data/remote-sensing/research_demos.py --output-dir tmp/research-check`。仅用标准库、生成带单位 CSV；这是合成教学实验，不是 6S、PROSAIL 或卫星产品流程复现。
+
 本库用于长期建立、维护和使用遥感物理知识体系。初始化日期：2026-09-12。
 
 ## 学习主线

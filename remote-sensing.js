@@ -4,7 +4,7 @@ const RemoteSensing = (() => {
   const LEVELS = ["未评估", "学习中", "能解释", "能推导", "能实现", "能迁移"];
   const ID = /^(?:RS-\d{2}-\d{3}|USR-[a-zA-Z0-9-]{1,80})$/;
   const e = value => String(value ?? "").replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
-  let catalog, options, root, loading = false, tab = "course", section = "all", selected = null, query = "", temperature = 300, courseChapter = 0;
+  let catalog, options, root, loading = false, tab = "reading", section = "all", selected = null, query = "", temperature = 300, courseChapter = 0;
   const COURSE = [
     {title:"第 1 章｜遥感究竟测到了什么？", en:"Radiometry and geometry", goals:"建立辐射亮度、辐照度、立体角和观测几何的共同语言。", sections:[
       ["从地表到数字量", "遥感观测不是直接读取‘温度’或‘水分’，而是接收器在有限波段、有限视场和有限积分时间内收集到的电磁能。地表状态决定反射、发射和散射；大气改变传播；光学系统和探测器再把辐射转换成数字量。任何反演都要先写清楚这条链。"],
@@ -48,6 +48,7 @@ const RemoteSensing = (() => {
       ["科研练习", "为‘土壤水分—亮温’建立含温度和植被的三参数 toy model，计算有限差分敏感性矩阵，改变观测频率/极化，判断哪种组合最能降低参数相关性。"]]}
   ];
   let revision = 0;
+  let research = { articles: [], sources: [], channels: [] };
 
   function text(value, limit = 20000) {
     if (typeof value !== "string" || value.length > limit) throw new Error("文本字段类型或长度不符合要求");
@@ -102,7 +103,7 @@ const RemoteSensing = (() => {
   const current = () => options.getState() || { entries: [], records: {} };
   const allEntries = () => [...catalog.entries, ...current().entries];
   const recordFor = id => current().records[id] || { note: "", level: LEVELS[0], updated: "" };
-  const matches = item => [item.title, item.aliases, item.summary, ...Object.values(item.body), recordFor(item.id).note].join(" ").toLocaleLowerCase().includes(query);
+  const matches = item => [item.title, item.aliases, item.summary, ...(item.article?.paragraphs || []), item.article?.title || "", ...Object.values(item.body), recordFor(item.id).note].join(" ").toLocaleLowerCase().includes(query);
   const sectionName = id => catalog.sections.find(item => item.id === id)?.title || id;
 
   async function init(settings) {
@@ -123,7 +124,15 @@ const RemoteSensing = (() => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       if (data.schemaVersion !== 1 || data.sections?.length !== 12 || JSON.stringify(data.fields) !== JSON.stringify(FIELDS) || !Array.isArray(data.entries) || !Array.isArray(data.sources)) throw new Error("知识库结构不完整");
-      data.entries = data.entries.map(item => validateEntry(item, data.sections.map(item => item.id)));
+      const researchResponse = await fetch("data/remote-sensing/research.json", { cache: "no-cache" });
+      if (!researchResponse.ok) throw new Error("课程资料 HTTP " + researchResponse.status);
+      research = validateResearch(await researchResponse.json(), data);
+      data.sources = [...data.sources, ...research.sources];
+      data.entries = data.entries.map(item => {
+        const entry = validateEntry(item, data.sections.map(item => item.id));
+        const article = research.articles.find(article => article.entryId === entry.id);
+        return article ? { ...entry, article, status: "专题正文 · 来源分项核验", sources: [...new Set([...entry.sources, ...article.sources])] } : entry;
+      });
       catalog = data;
       // Keep the original snapshot intact if validation fails, so full-data export can recover it.
       options.setState(validateState(current(), data.sections.map(item => item.id), data.entries.map(item => item.id)));
@@ -140,7 +149,7 @@ const RemoteSensing = (() => {
     const assessed = entries.filter(item => recordFor(item.id).level !== "未评估").length;
     root.innerHTML = `<section class="rs-hero"><div><span class="section-kicker">REMOTE SENSING · PERSONAL KNOWLEDGE</span><h2>从地表状态，到卫星观测。</h2><p>沿着电磁波的路径，建立自己的遥感物理知识体系。把概念、模型、来源与数值实验连起来，一次弄懂一个物理过程。</p></div><div class="rs-stats"><div><strong>12</strong><span>知识板块</span></div><div><strong>${entries.length}</strong><span>知识条目</span></div><div><strong>${assessed}</strong><span>已自评条目</span></div></div></section>
       <div class="rs-chain" aria-label="物理过程主线">${["地表状态", "电磁相互作用", "反射 / 吸收 / 散射 / 发射", "大气传播", "传感器观测 / TOA 信号", "前向模型", "参数反演"].map(label => `<span>${label}</span>`).join("")}</div>
-      <div class="rs-toolbar"><div class="rs-tabs" aria-label="知识库栏目">${[["map", "知识地图"], ["entries", "知识条目"], ["sources", "资料与规范"], ["lab", "物理实验"]].map(([id, label]) => `<button type="button" data-rs-tab="${id}" aria-pressed="${tab === id}">${label}</button>`).join("")}</div><div class="rs-actions"><button type="button" class="secondary-button compact" data-rs-action="new">＋ 新建条目</button><button type="button" class="secondary-button compact" data-rs-action="backup">备份</button><button type="button" class="secondary-button compact" data-rs-action="import">导入</button><button type="button" class="secondary-button compact" data-rs-action="markdown">导出 Markdown</button><input type="file" accept="application/json,.json" id="rs-import-file" class="hidden" aria-label="导入遥感知识库备份"></div></div>
+      <div class="rs-toolbar"><div class="rs-tabs" aria-label="知识库栏目">${[["reading", "专题阅读"], ["course", "基础概览"], ["map", "知识地图"], ["entries", "知识条目"], ["sources", "资料与规范"], ["lab", "物理实验"]].map(([id, label]) => `<button type="button" data-rs-tab="${id}" aria-pressed="${tab === id}">${label}</button>`).join("")}</div><div class="rs-actions"><button type="button" class="secondary-button compact" data-rs-action="new">＋ 新建条目</button><button type="button" class="secondary-button compact" data-rs-action="backup">备份</button><button type="button" class="secondary-button compact" data-rs-action="import">导入</button><button type="button" class="secondary-button compact" data-rs-action="markdown">导出 Markdown</button><input type="file" accept="application/json,.json" id="rs-import-file" class="hidden" aria-label="导入遥感知识库备份"></div></div>
       ${(tab === "map" || tab === "entries") && !selected ? `<div class="rs-search"><input type="search" id="rs-query" aria-label="搜索遥感知识" placeholder="搜索中文概念、英文术语或笔记…" value="${e(query)}"><select id="rs-section" aria-label="筛选知识板块"><option value="all">全部板块</option>${catalog.sections.map(item => `<option value="${item.id}" ${item.id === section ? "selected" : ""}>${item.id} · ${e(item.title)}</option>`).join("")}</select></div>` : ""}
       <div id="rs-content"></div><dialog id="rs-dialog" class="rs-dialog" aria-label="知识条目与资料导入"></dialog>`;
     renderContent();
@@ -150,6 +159,10 @@ const RemoteSensing = (() => {
     const content = root.querySelector("#rs-content");
     if (!content) return;
     if (selected) { renderReader(content); return; }
+    if (tab === "reading") {
+      content.innerHTML = `<div class="rs-intro"><h3>沿着问题读懂物理</h3><p>这轮新增 12 篇独立专题，覆盖观测量、传输、地表相互作用与反演。正文以连续段落展开，来源区分产品事实、教学推导与待精读文献。</p></div><div class="rs-entry-list">${research.articles.map(article => `<button class="rs-entry-button" data-rs-entry="${e(article.entryId)}"><h3>${e(article.title)}</h3><p>${e(article.paragraphs[0])}</p><span class="rs-badge">阅读全文 →</span></button>`).join("")}</div>`;
+      return;
+    }
     if (tab === "course") { renderCourse(content); return; }
     if (tab === "map") {
       const sections = catalog.sections.filter(item => (section === "all" || item.id === section) && ([item.title, item.description, ...item.topics].join(" ").toLocaleLowerCase().includes(query) || allEntries().some(entry => entry.section === item.id && matches(entry))));
@@ -200,6 +213,7 @@ const RemoteSensing = (() => {
   };
 
   function narrative(item) {
+    if (item.article) return `<div class="rs-narrative" data-rs-article="${e(item.id)}"><p class="rs-help">专题阅读 · ${e(item.article.title)}</p>${item.article.paragraphs.map(paragraph => `<p class="rs-prose">${e(paragraph)}</p>`).join("")}<p class="rs-help">文中公式与例题为教学推导；产品事实的核验范围见下方来源说明。</p><a class="rs-link" download href="data/remote-sensing/research_demos.py">下载本轮数值实验（Python 标准库）</a></div>`;
     const b = { ...item.body };
     const context = SECTION_CONTEXT[item.section] || "本主题需要同时结合观测量、物理过程和模型假设来理解。";
     b["概念"] = `${context} ${b["概念"]}`;
@@ -214,7 +228,7 @@ const RemoteSensing = (() => {
     const lesson = courseForSection(item.section);
     const lessonHtml = `<section class="rs-entry-lesson"><div class="section-kicker">配套课程 · ${e(lesson.en)}</div><h3>${e(lesson.title)}</h3><p class="rs-course-goal"><b>学习目标：</b>${e(lesson.goals)}</p>${lesson.sections.map(s => `<section class="rs-lesson"><h4>${e(s[0])}</h4><div class="rs-prose">${e(s[1])}</div></section>`).join("")}<p class="rs-help">以上是连续课程正文；下方字段用于速查、复习和记录个人理解。</p></section>`;
     content.innerHTML = `<article class="rs-reader"><button class="text-button" type="button" data-rs-action="back">← 返回条目列表</button><header><p class="section-kicker">${e(item.id)} · ${e(sectionName(item.section))}</p><h2>${e(item.title)}</h2><p class="rs-help">${e(item.aliases)}</p><span class="rs-badge">${e(item.status)}</span>${custom ? '<div class="rs-actions"><button class="secondary-button compact" type="button" data-rs-action="edit">编辑个人条目</button></div>' : ""}</header>
-      ${lessonHtml}${narrative(item)}<details class="rs-reference"><summary>展开条目速查字段</summary>${FIELDS.map(field => `<section><h3>${e(field)}</h3><div class="rs-prose ${field === "核心公式" ? "rs-formula" : ""}">${e(item.body[field] || "待补充")}</div></section>`).join("")}</details>
+      ${item.article ? "" : lessonHtml}${narrative(item)}<details class="rs-reference"><summary>展开条目速查字段</summary>${FIELDS.map(field => `<section><h3>${e(field)}</h3><div class="rs-prose ${field === "核心公式" ? "rs-formula" : ""}">${e(item.body[field] || "待补充")}</div></section>`).join("")}</details>
       ${item.sources.length ? `<h3>可追溯来源</h3>${catalog.sources.filter(source => item.sources.includes(source.id)).map(sourceCard).join("")}` : ""}
       ${item.related.length ? `<h3>关联知识</h3><div class="rs-actions">${item.related.map(id => allEntries().find(entry => entry.id === id)).filter(Boolean).map(entry => `<button class="secondary-button compact" type="button" data-rs-entry="${e(entry.id)}">${e(entry.title)} →</button>`).join("")}</div>` : ""}
       ${item.id === "RS-06-001" ? '<button class="primary-button" type="button" data-rs-tab="lab">打开 Planck 小实验 →</button>' : ""}
@@ -229,7 +243,7 @@ const RemoteSensing = (() => {
 
   function renderSources(content) {
     const documents = [["README.md", "资料库使用说明"], ["知识地图.md", "完整知识地图"], ["学习路线与进度.md", "学习路线与理解检验"], ["模板/知识条目.md", "标准知识条目模板"], ["模板/资料入库.md", "资料入库与交叉验证模板"], ["模板/模型对比.md", "模型差异对比模板"], ["模板/科研问题.md", "科研问题分析模板"], ["资料/来源登记.md", "来源登记"], ["变更记录.md", "维护记录"]];
-      content.innerHTML = `<div class="rs-intro"><h3>让每个结论，都能找到来处。</h3><p>推荐顺序：经典教材 → 官方 ATBD → 高质量综述 → 经典论文 → 官方技术文档 → 开源代码与教学资料。</p><p>当前有 3 个来源已核验并用于内置条目，另有 9 个教材、官方文档、ATBD 和经典论文入口处于“已定位待精读”状态；不同模型保留假设与适用范围的差异。</p></div>${catalog.sources.map(sourceCard).join("")}<section class="rs-source"><h3>长期维护工具</h3><p>资料入库时，先查重，再提取概念、公式、假设、参数与实验，合并进主条目；模型冲突单独对比。个人来源可写入条目的“推荐教材 / 论文 / ATBD”栏并注明核验状态。</p><div class="rs-actions">${documents.map(([path, title]) => `<a class="rs-link" download href="${encodeURI(`docs/remote-sensing/${path}`)}">${e(title)} ↓</a>`).join("")}</div></section><section class="rs-source"><h3>本机资料与备份</h3><p>“备份”保存个人条目、笔记和自评；“导入”可读取遥感备份或本站的完整学习数据备份，只提取遥感部分。合并时保留本机已有的同编号内容。跨设备使用时，请先备份再导入。</p><p>“导出 Markdown”包含内置与个人条目、关联来源及笔记，适合交给 Agent 继续整理。网页不会自动解析论文或运行 Python；可以把资料交给 Agent 后再整合入库。</p></section>`;
+      content.innerHTML = `<div class="rs-intro"><h3>让每个结论，都能找到来处。</h3><p>推荐顺序：经典教材 → 官方 ATBD → 高质量综述 → 经典论文 → 官方技术文档 → 开源代码与教学资料。</p><p>当前登记 ${catalog.sources.length} 个来源；${research.articles.length} 篇专题正文已接入条目。每项来源分别说明实际阅读位置、核验范围与尚未精读的部分。</p></div><section class="rs-intro"><h3>资料获取渠道</h3><p>从产品文档读定义，从教材与论文读推导，从模型接口核对输入输出。仅有 DOI 的记录不代表已阅读全文。</p>${research.channels.map(channel => `<p><a class="rs-link" href="${e(channel.url)}" target="_blank" rel="noopener noreferrer">${e(channel.name)}</a>：${e(channel.purpose)}</p>`).join("")}<a class="rs-link" download href="docs/remote-sensing/资料/本轮检索与证据.md">本轮检索记录与证据范围 ↓</a></section>${catalog.sources.map(sourceCard).join("")}<section class="rs-source"><h3>长期维护工具</h3><p>资料入库时，先查重，再提取概念、公式、假设、参数与实验，合并进主条目；模型冲突单独对比。个人来源可写入条目的“推荐教材 / 论文 / ATBD”栏并注明核验状态。</p><div class="rs-actions">${documents.map(([path, title]) => `<a class="rs-link" download href="${encodeURI(`docs/remote-sensing/${path}`)}">${e(title)} ↓</a>`).join("")}</div></section><section class="rs-source"><h3>本机资料与备份</h3><p>“备份”保存个人条目、笔记和自评；“导入”可读取遥感备份或本站的完整学习数据备份，只提取遥感部分。合并时保留本机已有的同编号内容。跨设备使用时，请先备份再导入。</p><p>“导出 Markdown”包含内置与个人条目、关联来源及笔记，适合交给 Agent 继续整理。网页不会自动解析论文或运行 Python；可以把资料交给 Agent 后再整合入库。</p></section>`;
   }
 
   function renderLab(content) {
@@ -362,13 +376,36 @@ const RemoteSensing = (() => {
     } catch (error) { options.toast(`导入未执行：${error.message}`); }
   }
 
+  function validateResearch(value, base) {
+    if (value?.schemaVersion !== 1 || !Array.isArray(value.sources) || !Array.isArray(value.articles) || !Array.isArray(value.channels)) throw new Error("研究资料结构无效");
+    const sourceIds = new Set(base.sources.map(source => source.id));
+    for (const source of value.sources) {
+      if (!/^SRC-\d{4}$/.test(source.id) || sourceIds.has(source.id) || !/^https:\/\//.test(source.url)) throw new Error("来源重复或链接无效");
+      sourceIds.add(source.id);
+      for (const key of ["title", "institution", "type", "url", "location", "scope", "checked"]) text(source[key]);
+    }
+    const articleIds = new Set();
+    for (const article of value.articles) {
+      if (articleIds.has(article.entryId) || !base.entries.some(entry => entry.id === article.entryId)) throw new Error("文章关联条目无效");
+      articleIds.add(article.entryId);
+      text(article.title, 200);
+      if (!Array.isArray(article.paragraphs) || !article.paragraphs.length || !Array.isArray(article.sources) || article.sources.some(id => !sourceIds.has(id))) throw new Error("文章正文或来源无效");
+      article.paragraphs.forEach(paragraph => text(paragraph));
+    }
+    for (const channel of value.channels) {
+      for (const key of ["name", "url", "purpose"]) text(channel[key]);
+      if (!/^https:\/\//.test(channel.url) || !Array.isArray(channel.sourceIds) || channel.sourceIds.some(id => !sourceIds.has(id))) throw new Error("资料渠道关联无效");
+    }
+    return value;
+  }
+
   function toMarkdown(entries, records, sources) {
     return `# 遥感物理个人知识库\n\n导出日期：${dateKey()}。学习状态为个人自评；内容核验状态另行标注。\n\n` + entries.map(item => {
       const record = records[item.id] || { level: "未评估", note: "" };
-      return `# ${item.title}\n\nID：${item.id}\n\n板块：${item.section}\n\n别名：${item.aliases}\n\n内容状态：${item.status}\n\n学习状态：${record.level}\n\n` + FIELDS.map(field => `## 【${field}】\n\n${item.body[field] || "待补充"}\n`).join("\n") + `\n关联条目：${item.related.join("、") || "待补充"}\n\n来源编号：${item.sources.join("、") || "见资料栏目，待核验"}\n\n## 个人笔记\n\n${record.note || "尚无笔记"}\n\n---\n\n`;
+      return `# ${item.title}\n\nID：${item.id}\n\n板块：${item.section}\n\n别名：${item.aliases}\n\n内容状态：${item.status}\n\n学习状态：${record.level}\n\n` + (item.article ? `## 专题正文\n\n${item.article.paragraphs.join("\n\n")}\n\n` : "") + FIELDS.map(field => `## 【${field}】\n\n${item.body[field] || "待补充"}\n`).join("\n") + `\n关联条目：${item.related.join("、") || "待补充"}\n\n来源编号：${item.sources.join("、") || "见资料栏目，待核验"}\n\n## 个人笔记\n\n${record.note || "尚无笔记"}\n\n---\n\n`;
     }).join("") + `# 来源登记\n\n` + sources.map(source => `## ${source.id} · ${source.title}\n\n机构：${source.institution}\n\n来源：${source.url}\n\n定位：${source.location}\n\n核验日期：${source.checked}\n\n${source.scope}\n`).join("\n");
   }
 
-  function resetView() { selected = null; query = ""; section = "all"; tab = "map"; render(); }
-  return { init, render, resetView, validateEntry, validateState, mergeState, planck, toMarkdown, FIELDS, LEVELS };
+  function resetView() { selected = null; query = ""; section = "all"; tab = "reading"; render(); }
+  return { init, render, resetView, validateEntry, validateState, validateResearch, mergeState, planck, toMarkdown, narrative, FIELDS, LEVELS };
 })();

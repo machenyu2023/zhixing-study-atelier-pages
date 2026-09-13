@@ -9,6 +9,34 @@ const catalog = JSON.parse(await readFile(new URL("data/remote-sensing/catalog.j
 const sectionIds = catalog.sections.map(item => item.id);
 const bundledIds = catalog.entries.map(item => item.id);
 const sourceIds = new Set(catalog.sources.map(item => item.id));
+const research = JSON.parse(await readFile(new URL("data/remote-sensing/research.json", root), "utf8"));
+rs.validateResearch(research, catalog);
+const retrievalLog = JSON.parse(await readFile(new URL("data/remote-sensing/source-retrieval-log.json", root), "utf8"));
+for (const item of research.sources) assert.ok(retrievalLog.some(log => log.key === item.evidenceKey && log.status === 200 && /^[a-f0-9]{64}$/.test(log.sha256)), "Registered sources require a successful retrieval record");
+const katex = vm.runInNewContext((await readFile(new URL("vendor/katex/katex.min.js", root), "utf8")) + "\nkatex");
+let formulas = 0;
+for (const article of research.articles) {
+  const entry = {...catalog.entries.find(entry => entry.id === article.entryId), article};
+  const html = rs.narrative(entry);
+  assert.ok(html.includes('data-rs-article="' + article.entryId + '"'));
+  assert.ok(!html.includes("先把它放回遥感的观测链"), "Authored prose must replace the generic field concatenation");
+  for (const paragraph of article.paragraphs) {
+    const regex = /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g;
+    for (const match of paragraph.matchAll(regex)) {
+      katex.renderToString(match[1] ?? match[2], {throwOnError:true, strict:"error", displayMode:match[1] !== undefined});
+      formulas++;
+    }
+    assert.ok(!paragraph.replace(regex, "").match(/\\[()[\]]/), "Unbalanced math delimiters");
+  }
+  const exported = rs.toMarkdown([entry], {}, [...catalog.sources, ...research.sources]);
+  assert.ok(exported.includes(article.paragraphs.at(-1)), "Markdown must include full authored text");
+}
+const unsafeArticle = {...research.articles[0], paragraphs:['<img src=x onerror=alert(1)>']};
+assert.ok(rs.narrative({id:unsafeArticle.entryId,article:unsafeArticle}).includes("&lt;img"));
+assert.throws(() => rs.validateResearch({...research, articles:[...research.articles, research.articles[0]]},catalog));
+assert.throws(() => rs.validateResearch({...research, articles:[{...research.articles[0], sources:["SRC-missing"]}]},catalog));
+assert.ok(formulas > 30, "Ensure actual inline and display formulas were parsed");
+console.log(`Validated ${research.articles.length} authored articles, source links, full-text export and ${formulas} KaTeX formulas.`);
 assert.equal(new Set(sectionIds).size, 12);
 assert.equal(new Set(bundledIds).size, bundledIds.length);
 assert.equal(JSON.stringify(rs.FIELDS), JSON.stringify(catalog.fields));

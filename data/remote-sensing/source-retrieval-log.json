@@ -1,0 +1,155 @@
+[
+  {
+    "key": "usgs-calibration",
+    "requestedUrl": "https://www.usgs.gov/landsat-missions/using-usgs-landsat-level-1-data-product",
+    "retrievedAt": "2026-09-13T13:15:21.850422+00:00",
+    "url": "https://www.usgs.gov/landsat-missions/using-usgs-landsat-level-1-data-product",
+    "status": 200,
+    "sha256": "a139672d8f33414f3e901a6525ea7d09c064a51dfb64e18b6fcdfe29c52bf21d",
+    "characters": 11689
+  },
+  {
+    "key": "usgs-surface-reflectance",
+    "requestedUrl": "https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-reflectance",
+    "retrievedAt": "2026-09-13T13:15:21.851250+00:00",
+    "url": "https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-reflectance",
+    "status": 200,
+    "sha256": "914ec06b63a3b81d65a580a0182e556eb2b74d397765f143884879fcb7809512",
+    "characters": 21395
+  },
+  {
+    "key": "usgs-temperature",
+    "requestedUrl": "https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-temperature",
+    "retrievedAt": "2026-09-13T13:15:21.851700+00:00",
+    "url": "https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-temperature",
+    "status": 200,
+    "sha256": "34aa7571ef92594ce06f17f4840edc30bdcc4cf8e9a0988fe562f89c8d8230d9",
+    "characters": 17252
+  },
+  {
+    "key": "modis-brdf",
+    "requestedUrl": "https://www.umb.edu/spectralmass/terra-aqua-modis/modis-user-guide/",
+    "retrievedAt": "2026-09-13T13:15:21.852206+00:00",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "key": "asf-sar",
+    "requestedUrl": "https://earthdata.nasa.gov/learn/earth-observation-data-basics/sar",
+    "retrievedAt": "2026-09-13T13:15:21.852986+00:00",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "key": "sail",
+    "requestedUrl": "https://artmotoolbox.com/radiative-transfer-models/85-rtm-canopy/2-4sail.html",
+    "retrievedAt": "2026-09-13T13:15:22.713294+00:00",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "key": "prospect",
+    "requestedUrl": "https://artmotoolbox.com/radiative-transfer-models/84-rtm-leaf/1-prospect-models.html",
+    "retrievedAt": "2026-09-13T13:15:24.175872+00:00",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "key": "smap-products",
+    "requestedUrl": "https://smap.jpl.nasa.gov/data/",
+    "retrievedAt": "2026-09-13T13:15:24.652552+00:00",
+    "url": "https://smap.jpl.nasa.gov/data/",
+    "status": 200,
+    "sha256": "fca9be4d47a64b22afb4da1dd339c8e9e2a1ee3b20d01bd22e96ec907f08694a",
+    "characters": 25753
+  },
+  {
+    "key": "libRadtran",
+    "requestedUrl": "https://www.libradtran.org/doku.php?id=start",
+    "retrievedAt": "2026-09-13T13:15:25.252627+00:00",
+    "url": "https://www.libradtran.org/doku.php?id=start",
+    "status": 200,
+    "sha256": "a5f02affc5dffea94fb2c6e596658ae31545a0c4587a362cf40d2b77604c9476",
+    "characters": 980
+  },
+  {
+    "key": "crossref-rodgers",
+    "requestedUrl": "https://api.crossref.org/works?query.bibliographic=Rodgers+Inverse+Methods+for+Atmospheric+Sounding+Theory+and+Practice&rows=3",
+    "retrievedAt": "2026-09-13T13:15:25.686531+00:00",
+    "error": "HTTP Error 429: Too Many Requests"
+  },
+  {
+    "key": "crossref-prosail-review",
+    "requestedUrl": "https://api.crossref.org/works?query.bibliographic=Jacquemoud+Verhoef+Baret+PROSPECT+SAIL+models+review+use+vegetation+characterization+2009&rows=3",
+    "retrievedAt": "2026-09-13T13:15:26.136094+00:00",
+    "url": "https://api.crossref.org/works?query.bibliographic=Jacquemoud+Verhoef+Baret+PROSPECT+SAIL+models+review+use+vegetation+characterization+2009&rows=3",
+    "status": 200,
+    "sha256": "d82923928a58641308f8de0ad9a2e018099c1799774e3f8b1bdffb114d6fbad1",
+    "characters": 6417
+  },
+  {
+    "key": "crossref-6s",
+    "requestedUrl": "https://api.crossref.org/works?query.bibliographic=Vermote+Tanre+Deuze+Herman+Morcrette+Second+Simulation+Satellite+Signal+Solar+Spectrum+6S+overview+1997&rows=3",
+    "retrievedAt": "2026-09-13T13:15:26.297422+00:00",
+    "url": "https://api.crossref.org/works?query.bibliographic=Vermote+Tanre+Deuze+Herman+Morcrette+Second+Simulation+Satellite+Signal+Solar+Spectrum+6S+overview+1997&rows=3",
+    "status": 200,
+    "sha256": "b93b1fbe31f0c642047be62ed970d93f626b5123a4b289b75b44cbdc5608b0e3",
+    "characters": 5026
+  },
+  {
+    "key": "crossref-dobson",
+    "requestedUrl": "https://api.crossref.org/works?query.bibliographic=Dobson+Ulaby+Hallikainen+El-Rayes+microwave+dielectric+behavior+wet+soil+part+II+dielectric+mixing+models+1985&rows=3",
+    "retrievedAt": "2026-09-13T13:15:27.263141+00:00",
+    "error": "HTTP Error 429: Too Many Requests"
+  },
+  {
+    "key": "prosail-code",
+    "requestedUrl": "https://raw.githubusercontent.com/jgomezdans/prosail/master/README.md",
+    "retrievedAt": "2026-09-13T13:16:55.635917+00:00",
+    "url": "https://raw.githubusercontent.com/jgomezdans/prosail/master/README.md",
+    "status": 200,
+    "sha256": "b903f5ad0903c8ccdfebd355292c98f07aa10c31dda42845d02f33b14ded07cc",
+    "characters": 8843
+  },
+  {
+    "key": "py6s",
+    "requestedUrl": "https://py6s.readthedocs.io/en/latest/",
+    "retrievedAt": "2026-09-13T13:16:55.636967+00:00",
+    "url": "https://py6s.readthedocs.io/en/latest/",
+    "status": 200,
+    "sha256": "5365fc132bfdfee9118010f4225a7d083a07eb995149a081cdb1077bc5f66aab",
+    "characters": 3824
+  },
+  {
+    "key": "modis-product",
+    "requestedUrl": "https://modis.gsfc.nasa.gov/data/dataprod/mod43.php",
+    "retrievedAt": "2026-09-13T13:16:55.637882+00:00",
+    "url": "https://modis.gsfc.nasa.gov/data/dataprod/mod43.php",
+    "status": 200,
+    "sha256": "6c1642d102abcdd81b725fc037af5b263799f5342378d1b45c7084d925e4706a",
+    "characters": 3035
+  },
+  {
+    "key": "esa-radar",
+    "requestedUrl": "https://www.esa.int/Applications/Observing_the_Earth/Copernicus/Sentinel-1/Instrument",
+    "retrievedAt": "2026-09-13T13:16:55.638791+00:00",
+    "url": "https://www.esa.int/Applications/Observing_the_Earth/Copernicus/Sentinel-1/Instrument",
+    "status": 200,
+    "sha256": "70d2f5d75b8e21f6473054bc750cea326a5919b0c22e0cc418f672167098a200",
+    "characters": 3526
+  },
+  {
+    "key": "crossref-rodgers",
+    "requestedUrl": "https://api.crossref.org/works?query.bibliographic=Rodgers+Inverse+Methods+for+Atmospheric+Sounding+Theory+and+Practice&rows=3",
+    "retrievedAt": "2026-09-13T13:16:55.639627+00:00",
+    "url": "https://api.crossref.org/works?query.bibliographic=Rodgers+Inverse+Methods+for+Atmospheric+Sounding+Theory+and+Practice&rows=3",
+    "status": 200,
+    "sha256": "16ff48078a52c11e182c6bb604bd5cc01b37ef66f82c6cc1ca8a25b63393898c",
+    "characters": 1508
+  },
+  {
+    "key": "crossref-dobson",
+    "requestedUrl": "https://api.crossref.org/works?query.bibliographic=Dobson+Ulaby+Hallikainen+El-Rayes+microwave+dielectric+behavior+wet+soil+part+II+dielectric+mixing+models+1985&rows=3",
+    "retrievedAt": "2026-09-13T13:16:56.647183+00:00",
+    "url": "https://api.crossref.org/works?query.bibliographic=Dobson+Ulaby+Hallikainen+El-Rayes+microwave+dielectric+behavior+wet+soil+part+II+dielectric+mixing+models+1985&rows=3",
+    "status": 200,
+    "sha256": "38ed86d5587c1be6684f0030bc71f8c31c3c6625d9023553dbefd2a37d1ebbf3",
+    "characters": 4133
+  }
+]
