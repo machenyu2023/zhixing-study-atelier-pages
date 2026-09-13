@@ -180,13 +180,20 @@ const RemoteSensing = (() => {
     return `<section class="rs-source"><span class="section-kicker">${e(source.id)} · ${e(source.institution)} · ${e(source.type)}</span><h3><a class="rs-link" href="${e(safeUrl)}" target="_blank" rel="noopener noreferrer">${e(source.title)} ↗</a></h3><p>定位：${e(source.location)}</p><p>${e(source.scope)}</p><p>核验日期：${e(source.checked)}</p></section>`;
   }
 
+  function courseForSection(id) {
+    const map = {"01":0,"02":1,"03":3,"04":3,"05":2,"06":4,"07":5,"08":5,"09":6,"10":7,"11":7,"12":7};
+    return COURSE[map[id] ?? 0];
+  }
+
   function renderReader(content) {
     const item = allEntries().find(entry => entry.id === selected);
     if (!item) { selected = null; render(); return; }
     const record = recordFor(item.id);
     const custom = current().entries.some(entry => entry.id === item.id);
+    const lesson = courseForSection(item.section);
+    const lessonHtml = `<section class="rs-entry-lesson"><div class="section-kicker">配套课程 · ${e(lesson.en)}</div><h3>${e(lesson.title)}</h3><p class="rs-course-goal"><b>学习目标：</b>${e(lesson.goals)}</p>${lesson.sections.map(s => `<section class="rs-lesson"><h4>${e(s[0])}</h4><div class="rs-prose">${e(s[1])}</div></section>`).join("")}<p class="rs-help">以上是连续课程正文；下方字段用于速查、复习和记录个人理解。</p></section>`;
     content.innerHTML = `<article class="rs-reader"><button class="text-button" type="button" data-rs-action="back">← 返回条目列表</button><header><p class="section-kicker">${e(item.id)} · ${e(sectionName(item.section))}</p><h2>${e(item.title)}</h2><p class="rs-help">${e(item.aliases)}</p><span class="rs-badge">${e(item.status)}</span>${custom ? '<div class="rs-actions"><button class="secondary-button compact" type="button" data-rs-action="edit">编辑个人条目</button></div>' : ""}</header>
-      ${FIELDS.map(field => `<section><h3>${e(field)}</h3><div class="rs-prose ${field === "核心公式" ? "rs-formula" : ""}">${e(item.body[field] || "待补充：保留问题与来源线索，后续逐步完善。")}</div></section>`).join("")}
+      ${lessonHtml}${FIELDS.map(field => `<section><h3>${e(field)}</h3><div class="rs-prose ${field === "核心公式" ? "rs-formula" : ""}">${e(item.body[field] || "待补充：保留问题与来源线索，后续逐步完善。")}</div></section>`).join("")}
       ${item.sources.length ? `<h3>可追溯来源</h3>${catalog.sources.filter(source => item.sources.includes(source.id)).map(sourceCard).join("")}` : ""}
       ${item.related.length ? `<h3>关联知识</h3><div class="rs-actions">${item.related.map(id => allEntries().find(entry => entry.id === id)).filter(Boolean).map(entry => `<button class="secondary-button compact" type="button" data-rs-entry="${e(entry.id)}">${e(entry.title)} →</button>`).join("")}</div>` : ""}
       ${item.id === "RS-06-001" ? '<button class="primary-button" type="button" data-rs-tab="lab">打开 Planck 小实验 →</button>' : ""}

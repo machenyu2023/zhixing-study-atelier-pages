@@ -40,6 +40,9 @@
 .rs-entry-button p { margin:0 0 10px; color:var(--muted); font-size:13px; line-height:1.7; }
 .rs-reader { border:1px solid var(--line); background:var(--surface); padding:clamp(18px,4vw,45px); max-width:1000px; margin:0 auto; min-width:0; }
 .rs-course { border:1px solid var(--line); background:var(--surface); padding:clamp(16px,3vw,32px); }
+.rs-entry-lesson { margin:24px 0 34px; padding:24px; background:#f4f8f3; border-left:4px solid var(--green); }
+.rs-entry-lesson h3 { font-family:Georgia,"Songti SC",serif; font-size:24px; }
+.rs-entry-lesson h4 { font-size:18px; margin:22px 0 8px; }
 .rs-course-layout { display:grid; grid-template-columns:240px minmax(0,1fr); gap:32px; max-width:1200px; margin:auto; }
 .rs-course-toc { border-right:1px solid var(--line); padding-right:18px; }
 .rs-course-toc strong { display:block; margin-bottom:12px; color:var(--green); }
