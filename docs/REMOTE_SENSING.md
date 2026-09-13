@@ -5,10 +5,11 @@
 ## 已提供的内容
 
 - 十二个板块与先修关系，中文/英文关键词检索。
-- 三个独立撰写的教学条目：辐射亮度与辐照度、TOA 与地表反射率、Planck 定律与亮温。其来源支持范围与教学简化均分别标注，不视为完整课程或已完成 ATBD 审读。
+- 十四个独立撰写的教学条目：覆盖立体角、光谱量、辐射传输、BRDF、TOA/SR、Planck/亮温、主动/被动微波、土壤水分、冠层、前向模型、反演和传感器定标。其来源支持范围与教学简化均分别标注，不视为完整课程或已完成 ATBD 审读。
 - 十项标准条目新建/编辑、同名提醒、个人笔记和学习自评。
 - 内置来源登记、资料入库/模型对比/科研问题模板。
 - Planck 温度滑块、固定坐标光谱、CSV 导出、标准库 Python 实验。
+- 新增 `data/remote-sensing/physics_demos.py`，包含辐射量半球积分、大气透过率/路径辐射、BRDF 方向性和土壤水分—介电—微波亮温四组可运行教学实验。
 
 ## 本轮整理基线
 
@@ -42,8 +43,9 @@
 npm test
 npm run build
 python data/remote-sensing/planck_demo.py --output-dir tmp/planck-check
+python data/remote-sensing/physics_demos.py --demo all --output-dir tmp/physics-check
 ```
 
-数值检查包括 300 K、10 μm 处的辐射值、温度单调性、波长谱峰、前端滑块全范围的纵轴覆盖；数据检查包括无效备份拒绝、冲突保留、重复导入和 Markdown 完整性。
+数值检查包括 300 K、10 μm 处的辐射值、温度单调性、波长谱峰、前端滑块全范围的纵轴覆盖；物理实验检查半球积分、透过率极限、BRDF 方向性和微波亮温单调性；数据检查包括无效备份拒绝、冲突保留、重复导入和 Markdown 完整性。
 
 Python Demo 只生成 CSV，用户可用任意绘图工具继续分析。它忽略大气、发射率与传感器响应，不能直接用于卫星 LST 反演。

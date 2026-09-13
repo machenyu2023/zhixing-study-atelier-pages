@@ -25,7 +25,14 @@
 
 同一概念只维护一个主条目，其他板块用链接引用。不同模型保留独立条目，并用模型对比表连接。来源未核验的结论明确标注，不能成为已验证知识的依据。
 
-现已整合进知行学习台，网站内容主文件是 `data/remote-sensing/catalog.json`。已建立十二板块、三个教学条目及三项来源登记，并运行 Planck Python 实验。公式的教学简化与来源支持范围在条目中分别标注；尚未完成经典教材或 ATBD 的系统整理。条目的完整程度与个人掌握程度分别记录，不把建档视为学会。
+现已整合进知行学习台，网站内容主文件是 `data/remote-sensing/catalog.json`。已建立十二板块、十四个教学条目及十二项来源登记，并运行 Planck、辐射量、透过率、BRDF 和微波 toy model 实验。公式的教学简化与来源支持范围在条目中分别标注；经典教材和 ATBD 仍按来源登记队列逐篇精读。条目的完整程度与个人掌握程度分别记录，不把建档视为学会。
+
+当前 Python 实验入口：
+
+```powershell
+python data/remote-sensing/planck_demo.py --output-dir tmp/planck-check
+python data/remote-sensing/physics_demos.py --demo all --output-dir tmp/physics-check
+```
 
 集成方式、备份格式和验证命令见[项目集成说明](../REMOTE_SENSING.md)。
 
