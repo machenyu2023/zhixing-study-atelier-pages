@@ -4,7 +4,49 @@ const RemoteSensing = (() => {
   const LEVELS = ["未评估", "学习中", "能解释", "能推导", "能实现", "能迁移"];
   const ID = /^(?:RS-\d{2}-\d{3}|USR-[a-zA-Z0-9-]{1,80})$/;
   const e = value => String(value ?? "").replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
-  let catalog, options, root, loading = false, tab = "map", section = "all", selected = null, query = "", temperature = 300;
+  let catalog, options, root, loading = false, tab = "course", section = "all", selected = null, query = "", temperature = 300, courseChapter = 0;
+  const COURSE = [
+    {title:"第 1 章｜遥感究竟测到了什么？", en:"Radiometry and geometry", goals:"建立辐射亮度、辐照度、立体角和观测几何的共同语言。", sections:[
+      ["从地表到数字量", "遥感观测不是直接读取‘温度’或‘水分’，而是接收器在有限波段、有限视场和有限积分时间内收集到的电磁能。地表状态决定反射、发射和散射；大气改变传播；光学系统和探测器再把辐射转换成数字量。任何反演都要先写清楚这条链。"],
+      ["辐射亮度与辐照度", "辐射亮度（radiance）是沿某一方向、单位投影面积、单位立体角、单位波长的功率：\n\\[L_\\lambda=\\frac{d^3\\Phi}{dA\\cos\\theta\\,d\\Omega\\,d\\lambda}\\]\n单位通常为 W m⁻² sr⁻¹ μm⁻¹。辐照度（irradiance）是到达表面的半球积分：\\[E=\\int_{2\\pi}L(\\Omega)\\cos\\theta\\,d\\Omega.\\] 对各向同性亮度，E=πL。cosθ来自投影面积，不能省略。"],
+      ["例题：半球积分", "若一个水平面接收各方向恒定 L=5 W m⁻² sr⁻¹，利用\\[\\int_{2\\pi}\\cos\\theta d\\Omega=\\pi\\]，得到 E=15.71 W m⁻²。若把 E 错写成 2πL，就等于忘记了斜入射光束的投影缩短。"],
+      ["自测与实验", "问题：为什么同一目标的 radiance 不是‘目标总能量’？\n答案：它带有方向、面积和光谱微分，描述的是观测几何中的密度量；总功率必须对面积、立体角和波长积分。运行 physics_demos.py 的 radiometry 例子，检查数值是否趋近 πL。"]]},
+    {title:"第 2 章｜波长、波段与传感器响应", en:"Spectral sampling and bandpass", goals:"理解连续光谱如何被波段响应函数变成一个像元值。", sections:[
+      ["连续谱不是观测值", "真实地表有连续的 L(λ)，传感器只在响应函数 R(λ) 加权后输出：\\[S=\\frac{\\int L(\\lambda)R(\\lambda)d\\lambda}{\\int R(\\lambda)d\\lambda}.\\] 因而‘红波段反射率’是一个加权平均，不是某个中心波长的真值。"],
+      ["波长与频率", "频率 ν 与波长 λ 满足 ν=c/λ。按波长和按频率表示的谱密度不同：\\[B_\\nu=B_\\lambda\\frac{\\lambda^2}{c}.\\] 转换时 λ 必须用米，且单位从‘每米’重新换算，不能直接把数值替换。"],
+      ["例题：窄带近似何时成立", "若 R(λ) 对称且窄，L(λ) 在带宽内变化很小，则 S≈L(λc)。在气体吸收线、叶绿素红边或水汽强吸收处，曲率大，窄带近似会产生明显偏差；应保留完整 R(λ) 积分。"],
+      ["练习", "画一个 0.8–0.9 μm 的高斯 R(λ)，分别对平滑光谱和含窄吸收线光谱积分，比较中心波长取样与波段平均的差异。"]]},
+    {title:"第 3 章｜反射率、BRDF 与方向性", en:"Reflectance and BRDF", goals:"把‘反射率’拆成方向分布、积分量和几何效应。", sections:[
+      ["BRDF 的定义", "双向反射分布函数（BRDF）是出射亮度与入射辐照度的比：\\[f_r(\\Omega_i,\\Omega_o)=\\frac{dL_o(\\Omega_o)}{dE_i}.\\] 单位 sr⁻¹。它依赖入射方向、出射方向、波长、目标状态和尺度。反射率是对 BRDF 加权积分后的量，不能把二者当同义词。"],
+      ["朗伯面与热点", "理想朗伯面 BRDF 为 ρ/π，与方向无关；真实植被和粗糙土壤有镜面峰、阴影和热点。太阳与传感器接近同向时阴影减少，亮度会异常升高。BRDF 归一化必须说明太阳/传感器方向约定。"],
+      ["例题：能量约束", "反射半球方向的反射率为\\[\\rho(\\Omega_i)=\\int_{2\\pi}f_r(\\Omega_i,\\Omega_o)\\cos\\theta_o d\\Omega_o.\\] 被动、无增益表面应满足 0≤ρ≤1。一个只拟合某个观测角的经验函数若积分超过 1，虽然局部拟合漂亮，却违反能量约束。"],
+      ["练习", "比较朗伯模型与带高斯镜面瓣的 BRDF，绘制不同观测天顶角的反射率；检查改变入射方向后是否仍满足互易性和半球积分约束。"]]},
+    {title:"第 4 章｜大气传播与 TOA 反射率", en:"Atmospheric transfer", goals:"从地表反射推到传感器处的 TOA radiance，并识别大气校正假设。", sections:[
+      ["最小辐射传输模型", "无散射教学近似下，传感器接收\\[L_{TOA}=L_{path}+T\\,L_{surface}.\\] 更完整的太阳反射模型还包含下行透过率、上行透过率和邻近效应。T=e^{-τ}，τ是光学厚度；大气散射会把其他方向的辐射耦合进来，不能总被一个标量 T 代替。"],
+      ["定标与反射率", "Landsat 等产品先用\\[L_\\lambda=M_LQ_{cal}+A_L\\]把 DN 转为 radiance，再用元数据系数得到未做太阳角校正的 ρ′，最后按太阳天顶角进行归一化。必须区分 TOA reflectance 与经过大气模型估计的 surface reflectance。"],
+      ["例题：透过率敏感性", "τ=0.2 时 T=0.819；τ=1 时 T=0.368。同样的地表信号在湿气溶胶条件下衰减更强。若把路径辐射当成零，会把大气自身的亮度错误归因于地表。"],
+      ["练习", "用三个 τ 和两个路径辐射值生成 TOA 曲线；再反演 L_surface，比较已知 τ 与错估 τ=τ+0.1 时的相对误差。"]]},
+    {title:"第 5 章｜热红外：Planck、亮温与 LST", en:"Thermal infrared", goals:"从谱辐射亮度区分亮温、物理温度和发射率。", sections:[
+      ["Planck 定律", "黑体谱辐射亮度为\\[B_\\lambda(T)=\\frac{2hc^2}{\\lambda^5[\\exp(hc/(\\lambda k_BT))-1]}.\\] λ 用 m 时结果为 W m⁻² sr⁻¹ m⁻¹；换成每 μm 要乘 10⁻⁶。升温会增大各波长辐射，并使谱峰按 Wien 定律 λ_maxT≈2897.77 μm·K 向短波移动。"],
+      ["亮温不是温度计读数", "亮温（brightness temperature）是把观测 radiance 代入黑体 Planck 反函数得到的等效温度。真实地表满足 L≈εB(T)+(1−ε)E_down/π，再经过大气传播；ε、下行辐射和透过率未知时，Tb通常低于或偏离物理温度。"],
+      ["例题：10 μm", "300 K 黑体在 10 μm 处 Bλ≈9.924 W m⁻² sr⁻¹ μm⁻¹，谱峰约 9.66 μm。若 ε=0.95 且忽略下行辐射，直接用黑体反演会得到低于 300 K 的 Tb；这不是‘算法坏了’，而是发射率小于 1。"],
+      ["练习", "运行 planck_demo.py 绘制 250、300、350 K 曲线；再人为乘以 ε=0.9，计算黑体反演温度，记录‘物理温度—亮温’差值。"]]},
+    {title:"第 6 章｜微波、极化与土壤水分", en:"Microwave remote sensing", goals:"理解主动/被动微波观测及介电常数对信号的作用。", sections:[
+      ["主动与被动", "被动微波测量自然热辐射，常以亮温 Tb 表示；主动微波（SAR）发射脉冲并测量回波的幅度和相位，常用归一化后向散射 σ⁰。二者频段可相近，但观测机制、几何和噪声不同。"],
+      ["介电常数与含水量", "复介电常数 ε*=ε′−iε″（符号取决于时间约定）描述极化储能与损耗。土壤含水量升高通常使 ε′显著增大，改变 Fresnel 反射、穿透深度和粗糙面散射。经验介电模型必须标明土壤质地、频率和温度范围。"],
+      ["微波亮温教学模型", "平滑、半无限、无大气的简化模型可写\\[T_b=e(\\theta,m)T_s,\\] 其中 e 是方向发射率。真实 SMAP 反演还需考虑粗糙度、植被光学厚度、土壤温度和极化。"],
+      ["练习", "用教学关系 ε′=3+20m 只做敏感性演示，绘制 m=0–0.4 时 Fresnel 发射率变化；明确这不是可直接用于产品反演的土壤介电模型。"]]},
+    {title:"第 7 章｜叶片、冠层与植被指数", en:"Canopy radiative transfer", goals:"从叶片吸收与冠层结构理解 NDVI 等指数的来源和局限。", sections:[
+      ["Beer–Lambert 只是第一步", "无碰撞太阳光束的冠层透过率可写\\[T(\\theta)=\\exp[-G(\\theta)LAI/\\cos\\theta].\\] LAI、叶倾角分布 G 和太阳天顶角共同决定阴影与穿透。它描述的是未碰撞光束，不能单独给出完整冠层反射光谱。"],
+      ["光谱机制", "叶绿素在蓝光和红光强吸收，近红外由叶片内部结构强散射；水分在短波红外有吸收特征。NDVI=(NIR−Red)/(NIR+Red) 是归一化对比量，会受土壤背景、冠层结构、饱和和大气残差影响。"],
+      ["例题：指数不是生物量", "若 Red=0.05、NIR=0.45，NDVI=0.80；若两者同时因阴影减半，NDVI仍为 0.80。指数对比例更稳健，但这也说明它不能唯一确定 LAI 或生物量。"],
+      ["练习", "建立 LAI=0–6 的 Beer 模型，比较不同太阳天顶角的透过率；再加入土壤反射背景，观察同一 LAI 下 NDVI 的变化。"]]},
+    {title:"第 8 章｜前向模型、反演与不确定性", en:"Forward and inverse problems", goals:"把遥感问题写成可检验的模型，理解可辨识性与验证。", sections:[
+      ["前向模型先于反演", "给定参数 x、状态和观测条件，通过物理模型 g 预测观测 y：\\[y=g(x,c)+\\epsilon.\\] 反演是由 y 推断 x；若多个参数产生近似相同 y，问题就是病态或不可辨识，不能靠更复杂的优化器凭空创造信息。"],
+      ["敏感性与误差传播", "局部一阶近似为\\[\\delta y\\approx J\\delta x,\\quad J_{ij}=\\partial g_i/\\partial x_j.\\] J 的列相似表示参数混淆；观测噪声和先验共同决定后验不确定性。报告反演结果时应同时报告假设、误差来源和验证尺度。"],
+      ["例题：两观测两参数", "若 y₁=x₁+x₂、y₂=2x₁+2x₂，两行线性相关，det(J)=0；即使有两个观测，也只能知道 x₁+x₂，无法分别估计两参数。增加一个对 x₁ 敏感的波段或先验，才可能恢复可辨识性。"],
+      ["科研练习", "为‘土壤水分—亮温’建立含温度和植被的三参数 toy model，计算有限差分敏感性矩阵，改变观测频率/极化，判断哪种组合最能降低参数相关性。"]]}
+  ];
   let revision = 0;
 
   function text(value, limit = 20000) {
@@ -108,6 +150,7 @@ const RemoteSensing = (() => {
     const content = root.querySelector("#rs-content");
     if (!content) return;
     if (selected) { renderReader(content); return; }
+    if (tab === "course") { renderCourse(content); return; }
     if (tab === "map") {
       const sections = catalog.sections.filter(item => (section === "all" || item.id === section) && ([item.title, item.description, ...item.topics].join(" ").toLocaleLowerCase().includes(query) || allEntries().some(entry => entry.section === item.id && matches(entry))));
       content.innerHTML = `<div class="rs-grid">${sections.map(item => {
@@ -120,6 +163,12 @@ const RemoteSensing = (() => {
       content.innerHTML = `${selectedSection ? `<div class="rs-intro"><h3>${e(selectedSection.title)}</h3><p>${e(selectedSection.description)}</p><p>建议前置：${selectedSection.prerequisites.map(sectionName).map(e).join("、") || "基础微积分与量纲意识"}</p><p>待扩展主题：${selectedSection.topics.map(e).join(" · ")}</p></div>` : ""}<div class="rs-entry-list">${items.map(item => `<button class="rs-entry-button" type="button" data-rs-entry="${e(item.id)}"><span class="section-kicker">${e(item.id)} · ${e(sectionName(item.section))}</span><h3>${e(item.title)}</h3><p>${e(item.summary || item.aliases)}</p><span class="rs-badge">${e(item.status)}</span> <span class="rs-badge">学习：${e(recordFor(item.id).level)}</span></button>`).join("")}</div>${items.length ? "" : empty("这里还没有匹配的条目", "可用十项标准模板新建条目，或先清除搜索条件。")}`;
     } else if (tab === "sources") renderSources(content);
     else renderLab(content);
+  }
+
+  function renderCourse(content) {
+    const ch = COURSE[courseChapter] || COURSE[0];
+    content.innerHTML = `<article class="rs-course"><aside class="rs-course-toc"><strong>系统课程 · 8 章</strong>${COURSE.map((item,i)=>`<button type="button" class="${i===courseChapter?'active':''}" data-rs-course="${i}">${item.title}</button>`).join("")}<p>每章包含概念、推导、例题和实验。建议边读边记笔记。</p></aside><main class="rs-course-main"><span class="section-kicker">CHAPTER ${String(courseChapter+1).padStart(2,'0')} · ${e(ch.en)}</span><h2>${e(ch.title)}</h2><p class="rs-course-goal"><b>本章目标：</b>${e(ch.goals)}</p>${ch.sections.map((s,i)=>`<section class="rs-lesson"><h3>${e(s[0])}</h3><div class="rs-prose">${e(s[1])}</div>${i===2?'<details class="rs-exercise"><summary>展开自测解析</summary><p>先写出已知量、单位和假设，再检查数量级与极限。答案若依赖未给出的参数，应明确说明不可唯一确定。</p></details>':''}</section>`).join("")}<div class="rs-course-nav">${courseChapter>0?`<button class="secondary-button compact" data-rs-course="${courseChapter-1}">← 上一章</button>`:'<span></span>'}${courseChapter<COURSE.length-1?`<button class="primary-button compact" data-rs-course="${courseChapter+1}">下一章 →</button>`:'<span class="rs-badge">课程第一版完成</span>'}</div></main></article>`;
+    if (typeof renderMathInElement === "function") content.querySelectorAll(".rs-prose").forEach(el=>renderMathInElement(el,{delimiters:[{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false}],throwOnError:false}));
   }
 
   function empty(title, description) {
@@ -214,6 +263,7 @@ const RemoteSensing = (() => {
     if (button.dataset.rsTab) { tab = button.dataset.rsTab; selected = null; render(); }
     if (button.dataset.rsSection) { section = button.dataset.rsSection; tab = "entries"; selected = null; query = ""; render(); }
     if (button.dataset.rsEntry) { selected = button.dataset.rsEntry; tab = "entries"; render(); root.querySelector(".rs-reader")?.scrollIntoView({ block: "start" }); }
+    if (button.dataset.rsCourse) { courseChapter = Number(button.dataset.rsCourse); tab = "course"; selected = null; render(); }
     switch (button.dataset.rsAction) {
       case "retry": load(); break;
       case "new": openEditor(); break;
