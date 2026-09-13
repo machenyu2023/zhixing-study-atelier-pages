@@ -44,7 +44,9 @@
 .rs-entry-lesson h3 { font-family:Georgia,"Songti SC",serif; font-size:24px; }
 .rs-entry-lesson h4 { font-size:18px; margin:22px 0 8px; }
 .rs-narrative { max-width:780px; margin:30px auto; }
-.rs-narrative p { font-size:16px; line-height:2.05; margin:0 0 1.25em; }
+.rs-narrative p { font-size:16px; line-height:2.05; margin:0 0 1.25em; overflow-wrap:anywhere; }
+.rs-narrative .katex-display, .rs-entry-lesson .katex-display { margin:1.1em 0; overflow-x:auto; overflow-y:hidden; padding:.2em 0; }
+.rs-narrative .katex, .rs-entry-lesson .katex { font-size:1.02em; }
 .rs-reference { border-top:1px solid var(--line); padding-top:16px; margin-top:30px; }
 .rs-reference summary { cursor:pointer; color:var(--green); font-weight:600; padding:10px 0; }
 .rs-course-layout { display:grid; grid-template-columns:240px minmax(0,1fr); gap:32px; max-width:1200px; margin:auto; }

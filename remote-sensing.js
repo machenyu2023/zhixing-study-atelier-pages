@@ -168,7 +168,7 @@ const RemoteSensing = (() => {
   function renderCourse(content) {
     const ch = COURSE[courseChapter] || COURSE[0];
     content.innerHTML = `<article class="rs-course"><aside class="rs-course-toc"><strong>系统课程 · 8 章</strong>${COURSE.map((item,i)=>`<button type="button" class="${i===courseChapter?'active':''}" data-rs-course="${i}">${item.title}</button>`).join("")}<p>每章包含概念、推导、例题和实验。建议边读边记笔记。</p></aside><main class="rs-course-main"><span class="section-kicker">CHAPTER ${String(courseChapter+1).padStart(2,'0')} · ${e(ch.en)}</span><h2>${e(ch.title)}</h2><p class="rs-course-goal"><b>本章目标：</b>${e(ch.goals)}</p>${ch.sections.map((s,i)=>`<section class="rs-lesson"><h3>${e(s[0])}</h3><div class="rs-prose">${e(s[1])}</div>${i===2?'<details class="rs-exercise"><summary>展开自测解析</summary><p>先写出已知量、单位和假设，再检查数量级与极限。答案若依赖未给出的参数，应明确说明不可唯一确定。</p></details>':''}</section>`).join("")}<div class="rs-course-nav">${courseChapter>0?`<button class="secondary-button compact" data-rs-course="${courseChapter-1}">← 上一章</button>`:'<span></span>'}${courseChapter<COURSE.length-1?`<button class="primary-button compact" data-rs-course="${courseChapter+1}">下一章 →</button>`:'<span class="rs-badge">课程第一版完成</span>'}</div></main></article>`;
-    if (typeof renderMathInElement === "function") content.querySelectorAll(".rs-prose").forEach(el=>renderMathInElement(el,{delimiters:[{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false}],throwOnError:false}));
+    if (typeof renderMathInElement === "function") content.querySelectorAll(".rs-prose, .rs-narrative, .rs-entry-lesson").forEach(el=>renderMathInElement(el,{delimiters:[{left:"\\[",right:"\\]",display:true},{left:"$$",right:"$$",display:true},{left:"\\(",right:"\\)",display:false}],throwOnError:false}));
   }
 
   function empty(title, description) {
@@ -220,7 +220,7 @@ const RemoteSensing = (() => {
       ${item.id === "RS-06-001" ? '<button class="primary-button" type="button" data-rs-tab="lab">打开 Planck 小实验 →</button>' : ""}
       <section class="rs-notes"><h3>我的理解与待解决问题</h3><p class="rs-help">内容核验与学习掌握分别记录。以下笔记与自评保存在当前浏览器，也包含在备份中。</p><label for="rs-level">当前学习状态（自评）</label><select id="rs-level">${LEVELS.map(level => `<option ${record.level === level ? "selected" : ""}>${level}</option>`).join("")}</select><label for="rs-note">个人笔记</label><textarea id="rs-note" maxlength="20000" placeholder="用自己的话解释这个过程；记录假设、推导、阅读位置或下一步实验。">${e(record.note)}</textarea><p id="rs-save-status" class="rs-help" role="status">${record.updated ? "已载入本机记录" : "填写后自动保存"}</p></section></article>`;
     if (typeof renderMathInElement === "function") {
-      content.querySelectorAll(".rs-prose").forEach(element => renderMathInElement(element, {
+      content.querySelectorAll(".rs-prose, .rs-narrative, .rs-entry-lesson").forEach(element => renderMathInElement(element, {
         delimiters: [{left: "\\[", right: "\\]", display: true}, {left: "$$", right: "$$", display: true}, {left: "\\(", right: "\\)", display: false}],
         throwOnError: false, trust: false, maxExpand: 200, maxSize: 20
       }));
