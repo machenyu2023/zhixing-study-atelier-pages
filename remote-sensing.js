@@ -185,6 +185,11 @@ const RemoteSensing = (() => {
     return COURSE[map[id] ?? 0];
   }
 
+  function narrative(item) {
+    const b = item.body;
+    return `<div class="rs-narrative"><p>要理解${e(item.title)}，先把它放回遥感的观测链：地表状态改变电磁波的反射、吸收、散射或发射，辐射经过大气后进入传感器，最终形成可定标的观测量。这个概念正是在这条链上的一个环节，下面从它所描述的物理过程开始。</p><p>${e(b["概念"])} ${e(b["核心物理过程"])}</p><p>在定量计算时，核心关系可以写成下面的形式。${e(b["核心公式"])}</p><p>式中的量分别表示：${e(b["变量解释"])} 这些单位和适用条件决定了公式能否用于实际观测。</p><p>${e(b["直观理解"])} 将这个直观图像和前面的方程对应起来，才能避免把统计相关性误认为物理因果。</p><p>它并不是孤立的定义。${e(b["与其他知识的联系"])} 因而学习本条目时，应该同时回看相关的辐射传输、观测几何或反演假设。</p><p>在遥感产品中，${e(b["遥感中的实际应用"])} 真实使用时还要核对传感器的波段、角度、定标版本和质量标识，而不能只套一个通用公式。</p><p>可以从${e(b["典型卫星 / 传感器"])}入手，把抽象量和具体仪器联系起来。推荐先读${e(b["推荐教材 / 论文 / ATBD"])}，再做一个小实验：${e(b["可进行的 Python 小实验"])}。</p></div>`;
+  }
+
   function renderReader(content) {
     const item = allEntries().find(entry => entry.id === selected);
     if (!item) { selected = null; render(); return; }
@@ -193,7 +198,7 @@ const RemoteSensing = (() => {
     const lesson = courseForSection(item.section);
     const lessonHtml = `<section class="rs-entry-lesson"><div class="section-kicker">配套课程 · ${e(lesson.en)}</div><h3>${e(lesson.title)}</h3><p class="rs-course-goal"><b>学习目标：</b>${e(lesson.goals)}</p>${lesson.sections.map(s => `<section class="rs-lesson"><h4>${e(s[0])}</h4><div class="rs-prose">${e(s[1])}</div></section>`).join("")}<p class="rs-help">以上是连续课程正文；下方字段用于速查、复习和记录个人理解。</p></section>`;
     content.innerHTML = `<article class="rs-reader"><button class="text-button" type="button" data-rs-action="back">← 返回条目列表</button><header><p class="section-kicker">${e(item.id)} · ${e(sectionName(item.section))}</p><h2>${e(item.title)}</h2><p class="rs-help">${e(item.aliases)}</p><span class="rs-badge">${e(item.status)}</span>${custom ? '<div class="rs-actions"><button class="secondary-button compact" type="button" data-rs-action="edit">编辑个人条目</button></div>' : ""}</header>
-      ${lessonHtml}${FIELDS.map(field => `<section><h3>${e(field)}</h3><div class="rs-prose ${field === "核心公式" ? "rs-formula" : ""}">${e(item.body[field] || "待补充：保留问题与来源线索，后续逐步完善。")}</div></section>`).join("")}
+      ${lessonHtml}${narrative(item)}<details class="rs-reference"><summary>展开条目速查字段</summary>${FIELDS.map(field => `<section><h3>${e(field)}</h3><div class="rs-prose ${field === "核心公式" ? "rs-formula" : ""}">${e(item.body[field] || "待补充")}</div></section>`).join("")}</details>
       ${item.sources.length ? `<h3>可追溯来源</h3>${catalog.sources.filter(source => item.sources.includes(source.id)).map(sourceCard).join("")}` : ""}
       ${item.related.length ? `<h3>关联知识</h3><div class="rs-actions">${item.related.map(id => allEntries().find(entry => entry.id === id)).filter(Boolean).map(entry => `<button class="secondary-button compact" type="button" data-rs-entry="${e(entry.id)}">${e(entry.title)} →</button>`).join("")}</div>` : ""}
       ${item.id === "RS-06-001" ? '<button class="primary-button" type="button" data-rs-tab="lab">打开 Planck 小实验 →</button>' : ""}
