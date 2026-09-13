@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updated": "2026-09-12",
+  "updated": "2026-09-13",
   "fields": [
     "概念",
     "核心物理过程",
@@ -304,6 +304,96 @@
       "location": "A) Planck curves — wavelength；B) Planck function maxima",
       "checked": "2026-09-12",
       "scope": "已核验教学网页的实验说明；本项目 Python 为独立实现，未复用其 Matlab 文件。"
+    },
+    {
+      "id": "SRC-0004",
+      "title": "Remote Sensing: The Image Chain Approach, 2nd ed.",
+      "institution": "Oxford University Press",
+      "type": "经典教材 · 已定位待精读",
+      "url": "https://doi.org/10.1093/oso/9780195178173.001.0001",
+      "location": "Radiometry；The Governing Equation For Radiance Reaching the Sensor；Atmospheric Compensation",
+      "checked": "2026-09-13（已定位，待精读）",
+      "scope": "候选教材；计划支持 01、02、03、04、10。需补章节页码、公式和例题定位。"
+    },
+    {
+      "id": "SRC-0005",
+      "title": "Physical Principles of Remote Sensing, 3rd ed.",
+      "institution": "Cambridge University Press",
+      "type": "经典教材 · 已定位待精读",
+      "url": "https://doi.org/10.1017/CBO9781139017411",
+      "location": "辐射量、光谱、热红外、微波与地表相互作用相关章节",
+      "checked": "2026-09-13（已定位，待精读）",
+      "scope": "候选教材；计划支持 01、02、03、05、06、07。"
+    },
+    {
+      "id": "SRC-0006",
+      "title": "Landsat Collection 2 Level-1 Data",
+      "institution": "USGS",
+      "type": "官方产品文档 · 已定位待精读",
+      "url": "https://www.usgs.gov/landsat-missions/landsat-collection-2-level-1-data",
+      "location": "DN、TOA Radiance/Reflectance 缩放系数；角度系数文件；QA 文件",
+      "checked": "2026-09-13（已定位，待精读）",
+      "scope": "候选官方来源；计划支持 04、12。需按具体 Collection 2 版本核对 MTL 字段。"
+    },
+    {
+      "id": "SRC-0007",
+      "title": "Landsat 8–9 Collection 2 Level 2 Science Product Guide",
+      "institution": "USGS",
+      "type": "官方产品指南/ATBD 入口 · 已定位待精读",
+      "url": "https://www.usgs.gov/media/files/landsat-8-9-collection-2-level-2-science-product-guide",
+      "location": "Surface Reflectance、Surface Temperature、输入与 QA；v6 PDF",
+      "checked": "2026-09-13（已定位，待精读）",
+      "scope": "候选官方来源；计划支持 04、06、12。需补 PDF 页码和算法链定位。"
+    },
+    {
+      "id": "SRC-0008",
+      "title": "SMAP L1B Radiometer Brightness Temperature ATBD",
+      "institution": "NASA NTRS / SMAP",
+      "type": "官方 ATBD · 已定位待精读",
+      "url": "https://ntrs.nasa.gov/citations/20160003317",
+      "location": "仪器、校准、前向模型、RFI 处理、Stokes 参数与误差章节",
+      "checked": "2026-09-13（已定位，待精读）",
+      "scope": "候选官方 ATBD；计划支持 07、08、10、12。"
+    },
+    {
+      "id": "SRC-0009",
+      "title": "SMAP L2/L3 Passive Soil Moisture ATBD",
+      "institution": "NASA/JPL SMAP",
+      "type": "官方 ATBD · 已定位待精读",
+      "url": "https://smap.jpl.nasa.gov/system/internal_resources/details/original/484_L2_SM_P_ATBD_rev_F_final_Aug2020.pdf",
+      "location": "0–5 cm 目标深度、36 km 网格、单/多通道反演与介电模型选项",
+      "checked": "2026-09-13（已定位，待精读）",
+      "scope": "候选官方 ATBD；计划支持 08、10、11。"
+    },
+    {
+      "id": "SRC-0010",
+      "title": "SMAP–Sentinel Active–Passive Soil Moisture ATBD",
+      "institution": "NASA/JPL SMAP",
+      "type": "官方 ATBD · 已定位待精读",
+      "url": "https://smap.jpl.nasa.gov/system/internal_resources/details/original/522_L2_SM_SP_Release_Version3.pdf",
+      "location": "L 波段辐射计与 C 波段 Sentinel-1 雷达耦合；9 km 产品",
+      "checked": "2026-09-13（已定位，待精读）",
+      "scope": "候选官方 ATBD；计划支持 07、08、10、11。"
+    },
+    {
+      "id": "SRC-0011",
+      "title": "Atmospheric correction of visible to middle-infrared EOS-MODIS data over land surfaces",
+      "institution": "Vermote et al., Journal of Geophysical Research",
+      "type": "经典论文 · 已定位待精读",
+      "url": "https://doi.org/10.1029/97JD00201",
+      "location": "MODIS 大气校正算法、气溶胶/水汽、邻近效应和方向性",
+      "checked": "2026-09-13（已定位，待精读）",
+      "scope": "候选经典论文；计划支持 03、04、05。需补原文公式和验证结果定位。"
+    },
+    {
+      "id": "SRC-0012",
+      "title": "Microwave Remote Sensing: Active and Passive, Volume 1",
+      "institution": "NASA NTRS / Ulaby, Moore & Fung",
+      "type": "经典教材书目 · 已定位待精读",
+      "url": "https://ntrs.nasa.gov/citations/19820039342",
+      "location": "微波辐射度量、天线、传播、校准和被动观测基础",
+      "checked": "2026-09-13（已定位，待精读）",
+      "scope": "候选经典教材书目；计划支持 07、08。需取得可读版本后补章节定位。"
     }
   ]
 }
